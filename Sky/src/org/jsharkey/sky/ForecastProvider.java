@@ -66,6 +66,18 @@ public class ForecastProvider extends ContentProvider {
         public static final String LAST_UPDATED = "lastUpdated";
 
         /**
+         * Country code where this widget exists, such as US or FR. This code is
+         * used when updating forecasts to use the best-available data source.
+         */
+        public static final String COUNTRY_CODE = "countryCode";
+
+        /**
+         * If known, the nearest METAR station to this location. The METAR data
+         * is used as a fall-back when no better forecast data is available.
+         */
+        public static final String METAR_STATION = "metarStation";
+
+        /**
          * Flag specifying if this widget has been configured yet, used to skip
          * building widget updates.
          */
@@ -152,7 +164,10 @@ public class ForecastProvider extends ContentProvider {
     private static class DatabaseHelper extends SQLiteOpenHelper {
         private static final String DATABASE_NAME = "forecasts.db";
 
-        private static final int DATABASE_VERSION = 2;
+        private static final int VER_ORIGINAL = 2;
+        private static final int VER_ADD_METAR = 3;
+
+        private static final int DATABASE_VERSION = VER_ADD_METAR;
 
         public DatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -167,6 +182,7 @@ public class ForecastProvider extends ContentProvider {
                     + AppWidgetsColumns.LON + " REAL,"
                     + AppWidgetsColumns.UNITS + " INTEGER,"
                     + AppWidgetsColumns.LAST_UPDATED + " INTEGER,"
+                    + AppWidgetsColumns.COUNTRY_CODE + " TEXT,"
                     + AppWidgetsColumns.CONFIGURED + " INTEGER);");
 
             db.execSQL("CREATE TABLE " + TABLE_FORECASTS + " ("
@@ -183,7 +199,16 @@ public class ForecastProvider extends ContentProvider {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             int version = oldVersion;
-
+            
+            switch (version) {
+                case VER_ORIGINAL:
+                    db.execSQL("ALTER TABLE " + TABLE_APPWIDGETS + " ADD COLUMN "
+                            + AppWidgetsColumns.COUNTRY_CODE + " TEXT");
+                    db.execSQL("ALTER TABLE " + TABLE_APPWIDGETS + " ADD COLUMN "
+                            + AppWidgetsColumns.METAR_STATION + " TEXT");
+                    version = VER_ADD_METAR;
+            }
+            
             if (version != DATABASE_VERSION) {
                 Log.w(TAG, "Destroying old data during upgrade.");
                 db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPWIDGETS);

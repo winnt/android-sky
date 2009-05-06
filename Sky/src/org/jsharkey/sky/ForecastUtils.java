@@ -39,14 +39,14 @@ public class ForecastUtils {
      * that our 6PM widget update will change icons correctly.
      */
     private static final int DAYTIME_END_HOUR = 16;
-
-    private static final Pattern sIconAlert = Pattern.compile("(alert|advisory|warning|watch)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconStorm = Pattern.compile("(thunder|tstms)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconSnow = Pattern.compile("(snow|ice|frost|flurries)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconShower = Pattern.compile("(rain)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconScatter = Pattern.compile("(shower|drizzle)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconClear = Pattern.compile("(sunny|breezy|clear)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sIconClouds = Pattern.compile("(cloud|fog)", Pattern.CASE_INSENSITIVE);
+    
+    private static final String[] sIconAlert = new String[] { "alert", "advisory", "warning", "watch" };
+    private static final String[] sIconStorm = new String[] { "thunder", "tstms" };
+    private static final String[] sIconSnow = new String[] { "snow", "ice", "frost", "flurr", "wintry" };
+    private static final String[] sIconShower = new String[] { "rain" };
+    private static final String[] sIconScatter = new String[] { "shower", "drizzle" };
+    private static final String[] sIconClear = new String[] { "sunny", "breezy", "clear" };
+    private static final String[] sIconClouds = new String[] { "cloud", "fog" };
 
     /**
      * Select an icon to describe the given {@link ForecastsColumns#CONDITIONS}
@@ -58,22 +58,38 @@ public class ForecastUtils {
      */
     public static int getIconForForecast(String conditions, boolean daytime) {
         int icon = 0;
-        if (sIconAlert.matcher(conditions).find()) {
+        conditions = conditions.toLowerCase();
+        
+        if (stringContains(conditions, sIconAlert)) {
             icon = R.drawable.weather_severe_alert;
-        } else if (sIconStorm.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconStorm)) {
             icon = R.drawable.weather_storm;
-        } else if (sIconSnow.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconSnow)) {
             icon = R.drawable.weather_snow;
-        } else if (sIconShower.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconShower)) {
             icon = R.drawable.weather_showers;
-        } else if (sIconScatter.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconScatter)) {
             icon = R.drawable.weather_showers_scattered;
-        } else if (sIconClear.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconClear)) {
             icon = daytime ? R.drawable.weather_clear : R.drawable.weather_clear_night;
-        } else if (sIconClouds.matcher(conditions).find()) {
+        } else if (stringContains(conditions, sIconClouds)) {
             icon = daytime ? R.drawable.weather_few_clouds : R.drawable.weather_few_clouds_night;
         }
         return icon;
+    }
+
+    /**
+     * Search the subject string for the given words using a case-sensitive
+     * search. This is usually faster than a {@link Pattern} regular expression
+     * because we don't have JIT.
+     */
+    private static boolean stringContains(String subject, String[] searchWords) {
+        for (String word : searchWords) {
+            if (subject.contains(word)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

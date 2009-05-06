@@ -15,9 +15,8 @@
 -->
 
 <resources>
-    <color name="transparent">#8f00</color>
     <color name="black">#f000</color>
     <color name="white">#ffff</color>
-    <color name="semi_white">#8fff</color>
-    <color name="semi_black">#8000</color>
+    <color name="semi_white">#f888</color>
+    <color name="semi_black">#f666</color>
 </resources>

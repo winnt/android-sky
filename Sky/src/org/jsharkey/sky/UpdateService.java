@@ -21,7 +21,8 @@ import java.util.Queue;
 
 import org.jsharkey.sky.ForecastProvider.AppWidgets;
 import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
-import org.jsharkey.sky.WebserviceHelper.ForecastParseException;
+import org.jsharkey.sky.webservice.WebserviceHelper;
+import org.jsharkey.sky.webservice.Forecast.ParseException;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -226,7 +227,7 @@ public class UpdateService extends Service implements Runnable {
                 // Last update is outside throttle window, so update again
                 try {
                     WebserviceHelper.updateForecasts(this, appWidgetUri, FORECAST_DAYS);
-                } catch (ForecastParseException e) {
+                } catch (ParseException e) {
                     Log.e(TAG, "Problem parsing forecast", e);
                 }
             }
