@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.jsharkey.sky.ForecastProvider.AppWidgets;
 import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
+import org.jsharkey.sky.webservice.WebserviceHelper;
 
 import android.app.Activity;
 import android.app.SearchManager;
@@ -62,6 +63,7 @@ public class ConfigureActivity extends Activity
     private EditText mTitle;
     private double mLat = Double.NaN;
     private double mLon = Double.NaN;
+    private String mCountryCode = null;
     private int mUnits = AppWidgetsColumns.UNITS_FAHRENHEIT;
 
     /**
@@ -149,11 +151,13 @@ public class ConfigureActivity extends Activity
             if (found == null) {
                 mLat = Double.NaN;
                 mLon = Double.NaN;
+                mCountryCode = null;
                 setActionEnabled(false);
             } else {
                 mTitle.setText(found.name);
                 mLat = found.lat;
                 mLon = found.lon;
+                mCountryCode = found.countryCode;
                 setActionEnabled(true);
             }
         }
@@ -166,8 +170,8 @@ public class ConfigureActivity extends Activity
         String name = null;
 
         double lat = Double.NaN;
-
         double lon = Double.NaN;
+        String countryCode = WebserviceHelper.COUNTRY_US;
 
         public GeocodeQuery(String query) {
             name = query;
@@ -202,6 +206,8 @@ public class ConfigureActivity extends Activity
                 lat = address.getLatitude();
                 lon = address.getLongitude();
             }
+            
+            countryCode = address.getCountryCode();
         }
     }
 
@@ -336,8 +342,10 @@ public class ConfigureActivity extends Activity
                 values.put(AppWidgetsColumns.LON, mLon);
                 values.put(AppWidgetsColumns.UNITS, mUnits);
                 values.put(AppWidgetsColumns.LAST_UPDATED, -1);
+                values.put(AppWidgetsColumns.COUNTRY_CODE, mCountryCode);
                 values.put(AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.CONFIGURED_TRUE);
 
+                // TODO: perform METAR lookup as needed, either here or during first update
                 // TODO: update instead of insert if editing an existing widget
                 ContentResolver resolver = getContentResolver();
                 resolver.insert(AppWidgets.CONTENT_URI, values);

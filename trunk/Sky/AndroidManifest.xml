@@ -52,7 +52,8 @@
             android:name=".DetailsActivity"
             android:theme="@android:style/Theme.Dialog"
             android:label="@string/title_details"
-            android:excludeFromRecents="true" />
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true" />
 
         <activity
             android:name=".ConfigureActivity"
