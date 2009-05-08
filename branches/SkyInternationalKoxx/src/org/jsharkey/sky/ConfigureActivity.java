@@ -356,6 +356,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			ContentValues values = new ContentValues();
 			String title = mTitle.getText().toString();
 			lang = mLang.getText().toString();
+			encoding= mEncoding.getText().toString();
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
 			
 			values.put(BaseColumns._ID, mAppWidgetId);
