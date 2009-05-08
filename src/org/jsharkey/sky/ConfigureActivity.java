@@ -233,10 +233,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mTitle = (EditText) findViewById(R.id.conf_title);
 
 		mLang = (EditText) findViewById(R.id.conf_lang);
-
 		mEncoding = (EditText) findViewById(R.id.conf_encoding);
 		mUpdateFreq = (EditText) findViewById(R.id.conf_update_freq);
-		mUpdateFreq = (EditText) findViewById(R.id.conf_encoding);
 		
 		// Picked save, so write values to backend
 
