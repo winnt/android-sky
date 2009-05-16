@@ -47,24 +47,21 @@ import android.widget.TextView;
  * widget is specified by sending a {@link Intent#setData(Uri)} pointing towards
  * a valid {@link AppWidgets#CONTENT_TYPE}.
  */
-public class DetailsActivity extends ListActivity implements
-		AdapterView.OnItemClickListener {
+public class DetailsActivity extends ListActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
 	private static final String TAG = "DetailsActivity";
 
 	private Uri mData;
 	private ListAdapter mAdapter;
 
-	private static final String[] PROJECTION_APPWIDGET = { AppWidgetsColumns.TITLE, AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.CURRENT_TEMP };
+	private static final String[] PROJECTION_APPWIDGET = { BaseColumns._ID, AppWidgetsColumns.TITLE,
+			AppWidgetsColumns.TEMP_UNIT, };
 
-	private static final int COL_TITLE = 0;
-	private static final int COL_TEMP_UNIT = 1;
-	private static final int COL_CURRENT_TEMP = 2;
+	private static final int COL_TITLE = 1;
+	private static final int COL_TEMP_UNIT = 2;
 
-	private static final String[] PROJECTION_FORECAST = new String[] {
-			BaseColumns._ID, ForecastsColumns.VALID_START,
-			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW,
-			ForecastsColumns.CONDITIONS, ForecastsColumns.URL,
-			ForecastsColumns.ICON_URL};
+	private static final String[] PROJECTION_FORECAST = new String[] { BaseColumns._ID, ForecastsColumns.VALID_START,
+			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.CONDITIONS, ForecastsColumns.URL,
+			ForecastsColumns.ICON_URL };
 
 	private static final int COL_VALID_START = 1;
 	private static final int COL_TEMP_HIGH = 2;
@@ -74,7 +71,8 @@ public class DetailsActivity extends ListActivity implements
 	private static final int COL_ICON_URL = 6;
 
 	private String temp_unit_str = "";
-	private int current_temp = 0;
+
+	private int widget_id;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -87,16 +85,14 @@ public class DetailsActivity extends ListActivity implements
 		View title = findViewById(android.R.id.title);
 		if (title instanceof TextView) {
 			TextView titleText = (TextView) title;
-			int dialogPadding = (int) getResources().getDimension(
-					R.dimen.dialog_padding);
+			int dialogPadding = (int) getResources().getDimension(R.dimen.dialog_padding);
 			titleText.setSingleLine();
 			titleText.setEllipsize(TruncateAt.END);
 			titleText.setGravity(Gravity.CENTER_VERTICAL);
-			titleText.setPadding(dialogPadding, dialogPadding, dialogPadding,
-					dialogPadding);
-			titleText.setCompoundDrawablesWithIntrinsicBounds(
-					R.drawable.ic_dialog_menu_generic, 0, 0, 0);
+			titleText.setPadding(dialogPadding, dialogPadding, dialogPadding, dialogPadding);
+			titleText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_dialog_menu_generic, 0, 0, 0);
 			titleText.setCompoundDrawablePadding(dialogPadding);
+			titleText.setOnClickListener(this);
 		}
 
 		// Use provided data to figure out which widget was selected
@@ -114,13 +110,14 @@ public class DetailsActivity extends ListActivity implements
 		Cursor cursor = null;
 
 		try {
-			cursor = resolver.query(mData, PROJECTION_APPWIDGET, null, null,
-					null);
+			cursor = resolver.query(mData, PROJECTION_APPWIDGET, null, null, null);
 			if (cursor != null && cursor.moveToFirst()) {
+
+				widget_id = Integer.parseInt(cursor.getString(0));
+
 				String titleString = cursor.getString(COL_TITLE);
 				setTitle(getString(R.string.detail_title, titleString));
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
-				current_temp = cursor.getInt(COL_CURRENT_TEMP);
 
 			}
 		} finally {
@@ -130,21 +127,19 @@ public class DetailsActivity extends ListActivity implements
 		}
 
 		// Query for any matching forecast data and create adapter
-		Uri forecastUri = Uri
-				.withAppendedPath(mData, AppWidgets.TWIG_FORECASTS);
-		Cursor forecastCursor = managedQuery(forecastUri, PROJECTION_FORECAST,
-				null, null, null);
+		Uri forecastUri = Uri.withAppendedPath(mData, AppWidgets.TWIG_FORECASTS);
+		Cursor forecastCursor = managedQuery(forecastUri, PROJECTION_FORECAST, null, null, null);
 
 		mAdapter = new ForecastAdapter(this, forecastCursor);
 		setListAdapter(mAdapter);
 		getListView().setOnItemClickListener(this);
+
 	}
 
 	/**
 	 * When clicked, launch any associated {@link ForecastsColumns#URL}.
 	 */
-	public void onItemClick(AdapterView<?> parent, View view, int position,
-			long id) {
+	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		Cursor cursor = (Cursor) parent.getItemAtPosition(position);
 		String url = cursor.getString(COL_URL);
 
@@ -187,11 +182,9 @@ public class DetailsActivity extends ListActivity implements
 			ContentResolver resolver = context.getContentResolver();
 			Resources res = context.getResources();
 
-
 			// Figure out day-of-week acronym to use
 			mTime.set(cursor.getLong(COL_VALID_START));
-			String dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1,
-					DateUtils.LENGTH_MEDIUM).toUpperCase();
+			String dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
 			day.setText(dayOfWeek);
 
 			// Set forecast conditions string
@@ -215,5 +208,16 @@ public class DetailsActivity extends ListActivity implements
 				low.setText(((Integer) tempLow).toString() + temp_unit_str);
 			}
 		}
+	}
+
+	@Override
+	public void onClick(View v) {
+
+		// Request update for these widgets and launch updater service
+		UpdateService.requestUpdate(new int[] { widget_id });
+		startService(new Intent(this, UpdateService.class));
+
+		finish();
+
 	}
 }
