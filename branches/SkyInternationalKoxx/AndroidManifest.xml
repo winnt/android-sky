@@ -23,6 +23,7 @@
 
         <provider android:name="ForecastProvider" android:authorities="org.jsharkey.sky" />
         <service android:name=".UpdateService" />
+<!--         <service android:name=".LocationService" /> -->
 
         <receiver android:name=".MedAppWidget" android:label="@string/label_med">
             <intent-filter>

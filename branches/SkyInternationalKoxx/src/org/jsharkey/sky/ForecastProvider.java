@@ -37,399 +37,393 @@ import android.util.Log;
  * widget updates or showing detailed lists.
  */
 public class ForecastProvider extends ContentProvider {
-    private static final String TAG = "ForecastProvider";
-    private static final boolean LOGD = true;
+	private static final String TAG = "ForecastProvider";
+	private static final boolean LOGD = true;
 
-    public static final String AUTHORITY = "org.jsharkey.sky";
+	public static final String AUTHORITY = "org.jsharkey.sky";
 
-    public interface AppWidgetsColumns {
-        /**
-         * Title given by user to this widget, usually shown in medium widgets
-         * and details title bar.
-         */
-        public static final String TITLE = "title";
-        public static final String LAT = "lat";
-        public static final String LON = "lon";
-        
+	public interface AppWidgetsColumns {
+		/**
+		 * Title given by user to this widget, usually shown in medium widgets
+		 * and details title bar.
+		 */
+		public static final String TITLE = "title";
+		public static final String LAT = "lat";
+		public static final String LON = "lon";
 
-        /**
-         * Last system time when forecasts for this widget were updated, usually
-         * as read from {@link System#currentTimeMillis()}.
-         */
-        public static final String LAST_UPDATED = "lastUpdated";
+		/**
+		 * Last system time when forecasts for this widget were updated, usually
+		 * as read from {@link System#currentTimeMillis()}.
+		 */
+		public static final String LAST_UPDATED = "lastUpdated";
 
-        /**
-         * Flag specifying if this widget has been configured yet, used to skip
-         * building widget updates.
-         */
-        public static final String CONFIGURED = "configured";
-        public static final int CONFIGURED_TRUE = 1;
+		/**
+		 * Flag specifying if this widget has been configured yet, used to skip
+		 * building widget updates.
+		 */
+		public static final String CONFIGURED = "configured";
+		public static final int CONFIGURED_TRUE = 1;
 
-        public static final String LANG = "lang";
+		public static final String LANG = "lang";
 
-        public static final String ENCODING = "encoding";
+		public static final String ENCODING = "encoding";
 
-        /**
-         * Current Temperature
-         */
-        public static final String CURRENT_TEMP = "current_temp";
+		/**
+		 * Current Temperature
+		 */
+		public static final String CURRENT_TEMP = "current_temp";
 
-        /**
-         * Temperature unit
-         */
-        public static final String TEMP_UNIT = "temp_unit";
+		/**
+		 * Temperature unit
+		 */
+		public static final String TEMP_UNIT = "temp_unit";
 
-        public static final String UPDATE_FREQ = "update_freq";
-    }
+		public static final String UPDATE_FREQ = "update_freq";
 
-    public static class AppWidgets implements BaseColumns, AppWidgetsColumns {
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/appwidgets");
+		public static final String UPDATE_LOCATION = "update_location";
+		public static final int UPDATE_LOCATION_TRUE = 1;
+		public static final int UPDATE_LOCATION_FALSE = 0;
 
-        /**
-         * Directory twig to request all forecasts for a specific widget.
-         */
-        public static final String TWIG_FORECASTS = "forecasts";
+	}
 
-        /**
-         * Directory twig to request the forecast nearest the requested time.
-         */
-        public static final String TWIG_FORECAST_AT = "forecast_at";
+	public static class AppWidgets implements BaseColumns, AppWidgetsColumns {
+		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/appwidgets");
 
-        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/appwidget";
-        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/appwidget";
+		/**
+		 * Directory twig to request all forecasts for a specific widget.
+		 */
+		public static final String TWIG_FORECASTS = "forecasts";
 
-    }
+		/**
+		 * Directory twig to request the forecast nearest the requested time.
+		 */
+		public static final String TWIG_FORECAST_AT = "forecast_at";
 
-    public interface ForecastsColumns {
-        /**
-         * The parent {@link AppWidgetManager#EXTRA_APPWIDGET_ID} of this
-         * forecast.
-         */
-        public static final String APPWIDGET_ID = "widgetId";
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/appwidget";
+		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/appwidget";
 
-        /**
-         * Flag if this forecast is an alert.
-         */
-        public static final String ALERT = "alert";
-        public static final int ALERT_TRUE = 1;
+	}
 
-        /**
-         * Timestamp when this forecast becomes valid, in base ready for
-         * comparison with {@link System#currentTimeMillis()}.
-         */
-        public static final String VALID_START = "validStart";
+	public interface ForecastsColumns {
+		/**
+		 * The parent {@link AppWidgetManager#EXTRA_APPWIDGET_ID} of this
+		 * forecast.
+		 */
+		public static final String APPWIDGET_ID = "widgetId";
 
-        /**
-         * High temperature during this forecast period, stored in Fahrenheit.
-         */
-        public static final String TEMP_HIGH = "tempHigh";
+		/**
+		 * Flag if this forecast is an alert.
+		 */
+		public static final String ALERT = "alert";
+		public static final int ALERT_TRUE = 1;
 
-        /**
-         * Low temperature during this forecast period, stored in Fahrenheit.
-         */
-        public static final String TEMP_LOW = "tempLow";
+		/**
+		 * Timestamp when this forecast becomes valid, in base ready for
+		 * comparison with {@link System#currentTimeMillis()}.
+		 */
+		public static final String VALID_START = "validStart";
 
-        /**
-         * String describing the weather conditions.
-         */
-        public static final String CONDITIONS = "conditions";
+		/**
+		 * High temperature during this forecast period, stored in Fahrenheit.
+		 */
+		public static final String TEMP_HIGH = "tempHigh";
 
-        /**
-         * Web link where more details can be found about this forecast.
-         */
-        public static final String URL = "url";
+		/**
+		 * Low temperature during this forecast period, stored in Fahrenheit.
+		 */
+		public static final String TEMP_LOW = "tempLow";
 
-        /**
-         * Web link where icon can be found.
-         */
-        public static final String ICON_URL = "icon_url";
+		/**
+		 * String describing the weather conditions.
+		 */
+		public static final String CONDITIONS = "conditions";
 
-}
+		/**
+		 * Web link where more details can be found about this forecast.
+		 */
+		public static final String URL = "url";
 
-    public static class Forecasts implements BaseColumns, ForecastsColumns {
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/forecasts");
+		/**
+		 * Web link where icon can be found.
+		 */
+		public static final String ICON_URL = "icon_url";
 
-        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/forecast";
-        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/forecast";
-        
-    }
+	}
 
-    private static final String TABLE_APPWIDGETS = "appwidgets";
-    private static final String TABLE_FORECASTS = "forecasts";
+	public static class Forecasts implements BaseColumns, ForecastsColumns {
+		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/forecasts");
 
-    private DatabaseHelper mOpenHelper;
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/forecast";
+		public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/forecast";
 
-    /**
-     * Helper to manage upgrading between versions of the forecast database.
-     */
-    private static class DatabaseHelper extends SQLiteOpenHelper {
-        private static final String DATABASE_NAME = "forecasts.db";
+	}
 
-        private static final int DATABASE_VERSION = 5;
+	private static final String TABLE_APPWIDGETS = "appwidgets";
+	private static final String TABLE_FORECASTS = "forecasts";
 
-        public DatabaseHelper(Context context) {
-            super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        }
+	private DatabaseHelper mOpenHelper;
 
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + TABLE_APPWIDGETS + " ("
-                    + BaseColumns._ID + " INTEGER PRIMARY KEY,"
-                    + AppWidgetsColumns.TITLE + " TEXT,"
-                    + AppWidgetsColumns.LAT + " REAL,"
-                    + AppWidgetsColumns.LON + " REAL,"
-                    + AppWidgetsColumns.LANG + " TEXT,"
-                    + AppWidgetsColumns.ENCODING + " TEXT,"
-                    + AppWidgetsColumns.UPDATE_FREQ + " INTEGER,"
-                    + AppWidgetsColumns.LAST_UPDATED + " INTEGER,"
-                    + AppWidgetsColumns.TEMP_UNIT + " STRING,"
-                    + AppWidgetsColumns.CURRENT_TEMP + " INTEGER,"
-                    + AppWidgetsColumns.CONFIGURED + " INTEGER);");
+	/**
+	 * Helper to manage upgrading between versions of the forecast database.
+	 */
+	private static class DatabaseHelper extends SQLiteOpenHelper {
+		private static final String DATABASE_NAME = "forecasts.db";
 
-            db.execSQL("CREATE TABLE " + TABLE_FORECASTS + " ("
-                    + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + ForecastsColumns.APPWIDGET_ID + " INTEGER,"
-                    + ForecastsColumns.ALERT + " INTEGER DEFAULT 0,"
-                    + ForecastsColumns.VALID_START + " INTEGER,"
-                    + ForecastsColumns.TEMP_HIGH + " INTEGER,"
-                    + ForecastsColumns.TEMP_LOW + " INTEGER,"
-                    + ForecastsColumns.CONDITIONS + " TEXT,"
-                    + ForecastsColumns.URL + " TEXT,"
-                    + ForecastsColumns.ICON_URL + " TEXT);");
-        }
+		private static final int DATABASE_VERSION = 8;
 
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            int version = oldVersion;
+		public DatabaseHelper(Context context) {
+			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		}
 
-            if (version != DATABASE_VERSION) {
-                Log.w(TAG, "Destroying old data during upgrade.");
-                db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPWIDGETS);
-                db.execSQL("DROP TABLE IF EXISTS " + TABLE_FORECASTS);
-                onCreate(db);
-            }
-        }
-    }
+		@Override
+		public void onCreate(SQLiteDatabase db) {
+			db.execSQL("CREATE TABLE " + TABLE_APPWIDGETS + " (" + BaseColumns._ID + " INTEGER PRIMARY KEY,"
+					+ AppWidgetsColumns.TITLE + " TEXT," + AppWidgetsColumns.LAT + " REAL," + AppWidgetsColumns.LON
+					+ " REAL," + AppWidgetsColumns.LANG + " TEXT," + AppWidgetsColumns.ENCODING + " TEXT,"
+					+ AppWidgetsColumns.UPDATE_FREQ + " INTEGER," + AppWidgetsColumns.UPDATE_LOCATION + " INTEGER,"
+					+ AppWidgetsColumns.LAST_UPDATED + " INTEGER," + AppWidgetsColumns.TEMP_UNIT + " STRING,"
+					+ AppWidgetsColumns.CURRENT_TEMP + " INTEGER," + AppWidgetsColumns.CONFIGURED + " INTEGER);");
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
-        if (LOGD) Log.d(TAG, "delete() with uri=" + uri);
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+			db.execSQL("CREATE TABLE " + TABLE_FORECASTS + " (" + BaseColumns._ID
+					+ " INTEGER PRIMARY KEY AUTOINCREMENT," + ForecastsColumns.APPWIDGET_ID + " INTEGER,"
+					+ ForecastsColumns.ALERT + " INTEGER DEFAULT 0," + ForecastsColumns.VALID_START + " INTEGER,"
+					+ ForecastsColumns.TEMP_HIGH + " INTEGER," + ForecastsColumns.TEMP_LOW + " INTEGER,"
+					+ ForecastsColumns.CONDITIONS + " TEXT," + ForecastsColumns.URL + " TEXT,"
+					+ ForecastsColumns.ICON_URL + " TEXT);");
+		}
 
-        int count = 0;
+		@Override
+		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+			int version = oldVersion;
 
-        switch (sUriMatcher.match(uri)) {
-            case APPWIDGETS: {
-                count = db.delete(TABLE_APPWIDGETS, selection, selectionArgs);
-                break;
-            }
-            case APPWIDGETS_ID: {
-                // Delete a specific widget and all its forecasts
-                long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
-                count = db.delete(TABLE_APPWIDGETS, BaseColumns._ID + "=" + appWidgetId, null);
-                count += db.delete(TABLE_FORECASTS, ForecastsColumns.APPWIDGET_ID + "="
-                        + appWidgetId, null);
-                break;
-            }
-            case APPWIDGETS_FORECASTS: {
-                // Delete all the forecasts for a specific widget
-                long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
-                if (selection == null) {
-                    selection = "";
-                } else {
-                    selection = "(" + selection + ") AND ";
-                }
-                selection += ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId;
-                count = db.delete(TABLE_FORECASTS, selection, selectionArgs);
-                break;
-            }
-            case FORECASTS: {
-                count = db.delete(TABLE_FORECASTS, selection, selectionArgs);
-                break;
-            }
-            default:
-                throw new UnsupportedOperationException();
-        }
+			if (version != DATABASE_VERSION) {
+				Log.w(TAG, "Destroying old data during upgrade.");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPWIDGETS);
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_FORECASTS);
+				onCreate(db);
+			}
+		}
+	}
 
-        return count;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+		if (LOGD)
+			Log.d(TAG, "delete() with uri=" + uri);
+		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getType(Uri uri) {
-        switch (sUriMatcher.match(uri)) {
-            case APPWIDGETS:
-                return AppWidgets.CONTENT_TYPE;
-            case APPWIDGETS_ID:
-                return AppWidgets.CONTENT_ITEM_TYPE;
-            case APPWIDGETS_FORECASTS:
-                return Forecasts.CONTENT_TYPE;
-            case FORECASTS:
-                return Forecasts.CONTENT_TYPE;
-            case FORECASTS_ID:
-                return Forecasts.CONTENT_ITEM_TYPE;
-        }
-        throw new IllegalStateException();
-    }
+		int count = 0;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Uri insert(Uri uri, ContentValues values) {
-        if (LOGD) Log.d(TAG, "insert() with uri=" + uri);
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		switch (sUriMatcher.match(uri)) {
+		case APPWIDGETS: {
+			count = db.delete(TABLE_APPWIDGETS, selection, selectionArgs);
+			break;
+		}
+		case APPWIDGETS_ID: {
+			// Delete a specific widget and all its forecasts
+			long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
+			count = db.delete(TABLE_APPWIDGETS, BaseColumns._ID + "=" + appWidgetId, null);
+			count += db.delete(TABLE_FORECASTS, ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId, null);
+			break;
+		}
+		case APPWIDGETS_FORECASTS: {
+			// Delete all the forecasts for a specific widget
+			long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
+			if (selection == null) {
+				selection = "";
+			} else {
+				selection = "(" + selection + ") AND ";
+			}
+			selection += ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId;
+			count = db.delete(TABLE_FORECASTS, selection, selectionArgs);
+			break;
+		}
+		case FORECASTS: {
+			count = db.delete(TABLE_FORECASTS, selection, selectionArgs);
+			break;
+		}
+		default:
+			throw new UnsupportedOperationException();
+		}
 
-        Uri resultUri = null;
+		return count;
+	}
 
-        switch (sUriMatcher.match(uri)) {
-            case APPWIDGETS: {
-                long rowId = db.insert(TABLE_APPWIDGETS, AppWidgetsColumns.TITLE, values);
-                if (rowId != -1) {
-                    resultUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, rowId);
-                }
-                break;
-            }
-            case APPWIDGETS_FORECASTS: {
-                // Insert a forecast into a specific widget
-                long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
-                values.put(ForecastsColumns.APPWIDGET_ID, appWidgetId);
-                long rowId = db.insert(TABLE_FORECASTS, ForecastsColumns.CONDITIONS, values);
-                if (rowId != -1) {
-                    resultUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, rowId);
-                }
-                break;
-            }
-            case FORECASTS: {
-                long rowId = db.insert(TABLE_FORECASTS, ForecastsColumns.CONDITIONS, values);
-                if (rowId != -1) {
-                    resultUri = ContentUris.withAppendedId(Forecasts.CONTENT_URI, rowId);
-                }
-                break;
-            }
-            default:
-                throw new UnsupportedOperationException();
-        }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String getType(Uri uri) {
+		switch (sUriMatcher.match(uri)) {
+		case APPWIDGETS:
+			return AppWidgets.CONTENT_TYPE;
+		case APPWIDGETS_ID:
+			return AppWidgets.CONTENT_ITEM_TYPE;
+		case APPWIDGETS_FORECASTS:
+			return Forecasts.CONTENT_TYPE;
+		case FORECASTS:
+			return Forecasts.CONTENT_TYPE;
+		case FORECASTS_ID:
+			return Forecasts.CONTENT_ITEM_TYPE;
+		}
+		throw new IllegalStateException();
+	}
 
-        return resultUri;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+		if (LOGD)
+			Log.d(TAG, "insert() with uri=" + uri);
+		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-    @Override
-    public boolean onCreate() {
-        mOpenHelper = new DatabaseHelper(getContext());
-        return true;
-    }
+		Uri resultUri = null;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Cursor query(Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
-        if (LOGD) Log.d(TAG, "query() with uri=" + uri);
-        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		switch (sUriMatcher.match(uri)) {
+		case APPWIDGETS: {
+			long rowId = db.insert(TABLE_APPWIDGETS, AppWidgetsColumns.TITLE, values);
+			if (rowId != -1) {
+				resultUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, rowId);
+			}
+			break;
+		}
+		case APPWIDGETS_FORECASTS: {
+			// Insert a forecast into a specific widget
+			long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
+			values.put(ForecastsColumns.APPWIDGET_ID, appWidgetId);
+			long rowId = db.insert(TABLE_FORECASTS, ForecastsColumns.CONDITIONS, values);
+			if (rowId != -1) {
+				resultUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, rowId);
+			}
+			break;
+		}
+		case FORECASTS: {
+			long rowId = db.insert(TABLE_FORECASTS, ForecastsColumns.CONDITIONS, values);
+			if (rowId != -1) {
+				resultUri = ContentUris.withAppendedId(Forecasts.CONTENT_URI, rowId);
+			}
+			break;
+		}
+		default:
+			throw new UnsupportedOperationException();
+		}
 
-        String limit = null;
+		return resultUri;
+	}
 
-        switch (sUriMatcher.match(uri)) {
-            case APPWIDGETS: {
-                qb.setTables(TABLE_APPWIDGETS);
-                break;
-            }
-            case APPWIDGETS_ID: {
-                String appWidgetId = uri.getPathSegments().get(1);
-                qb.setTables(TABLE_APPWIDGETS);
-                qb.appendWhere(BaseColumns._ID + "=" + appWidgetId);
-                break;
-            }
-            case APPWIDGETS_FORECASTS: {
-                // Pick all the forecasts for given widget, sorted by date and
-                // importance
-                String appWidgetId = uri.getPathSegments().get(1);
-                qb.setTables(TABLE_FORECASTS);
-                qb.appendWhere(ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId);
-                sortOrder = ForecastsColumns.VALID_START + " ASC, " + ForecastsColumns.ALERT
-                        + " DESC";
-                break;
-            }
-            case APPWIDGETS_FORECAST_AT: {
-                // Pick the forecast nearest for given widget nearest the given
-                // timestamp
-                String appWidgetId = uri.getPathSegments().get(1);
-                String atTime = uri.getPathSegments().get(3);
-                qb.setTables(TABLE_FORECASTS);
-                qb.appendWhere(ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId);
-                sortOrder = "ABS(" + ForecastsColumns.VALID_START + " - " + atTime + ") ASC, "
-                        + ForecastsColumns.ALERT + " DESC";
-                limit = "1";
-                break;
-            }
-            case FORECASTS: {
-                qb.setTables(TABLE_FORECASTS);
-                break;
-            }
-            case FORECASTS_ID: {
-                String forecastId = uri.getPathSegments().get(1);
-                qb.setTables(TABLE_FORECASTS);
-                qb.appendWhere(BaseColumns._ID + "=" + forecastId);
-                break;
-            }
-        }
+	@Override
+	public boolean onCreate() {
+		mOpenHelper = new DatabaseHelper(getContext());
+		return true;
+	}
 
-        return qb.query(db, projection, selection, selectionArgs, null, null, sortOrder, limit);
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+		if (LOGD)
+			Log.d(TAG, "query() with uri=" + uri);
+		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        if (LOGD) Log.d(TAG, "update() with uri=" + uri);
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		String limit = null;
 
-        switch (sUriMatcher.match(uri)) {
-            case APPWIDGETS: {
-                return db.update(TABLE_APPWIDGETS, values, selection, selectionArgs);
-            }
-            case APPWIDGETS_ID: {
-                long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
-                return db.update(TABLE_APPWIDGETS, values, BaseColumns._ID + "=" + appWidgetId,
-                        null);
-            }
-            case FORECASTS: {
-                return db.update(TABLE_FORECASTS, values, selection, selectionArgs);
-            }
-        }
+		switch (sUriMatcher.match(uri)) {
+		case APPWIDGETS: {
+			qb.setTables(TABLE_APPWIDGETS);
+			break;
+		}
+		case APPWIDGETS_ID: {
+			String appWidgetId = uri.getPathSegments().get(1);
+			qb.setTables(TABLE_APPWIDGETS);
+			qb.appendWhere(BaseColumns._ID + "=" + appWidgetId);
+			break;
+		}
+		case APPWIDGETS_FORECASTS: {
+			// Pick all the forecasts for given widget, sorted by date and
+			// importance
+			String appWidgetId = uri.getPathSegments().get(1);
+			qb.setTables(TABLE_FORECASTS);
+			qb.appendWhere(ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId);
+			sortOrder = ForecastsColumns.VALID_START + " ASC, " + ForecastsColumns.ALERT + " DESC";
+			break;
+		}
+		case APPWIDGETS_FORECAST_AT: {
+			// Pick the forecast nearest for given widget nearest the given
+			// timestamp
+			String appWidgetId = uri.getPathSegments().get(1);
+			String atTime = uri.getPathSegments().get(3);
+			qb.setTables(TABLE_FORECASTS);
+			qb.appendWhere(ForecastsColumns.APPWIDGET_ID + "=" + appWidgetId);
+			sortOrder = "ABS(" + ForecastsColumns.VALID_START + " - " + atTime + ") ASC, " + ForecastsColumns.ALERT
+					+ " DESC";
+			limit = "1";
+			break;
+		}
+		case FORECASTS: {
+			qb.setTables(TABLE_FORECASTS);
+			break;
+		}
+		case FORECASTS_ID: {
+			String forecastId = uri.getPathSegments().get(1);
+			qb.setTables(TABLE_FORECASTS);
+			qb.appendWhere(BaseColumns._ID + "=" + forecastId);
+			break;
+		}
+		}
 
-        throw new UnsupportedOperationException();
-    }
+		return qb.query(db, projection, selection, selectionArgs, null, null, sortOrder, limit);
+	}
 
-    /**
-     * Matcher used to filter an incoming {@link Uri}. 
-     */
-    private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+		if (LOGD)
+			Log.d(TAG, "update() with uri=" + uri);
+		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-    private static final int APPWIDGETS = 101;
-    private static final int APPWIDGETS_ID = 102;
-    private static final int APPWIDGETS_FORECASTS = 103;
-    private static final int APPWIDGETS_FORECAST_AT = 104;
+		switch (sUriMatcher.match(uri)) {
+		case APPWIDGETS: {
+			return db.update(TABLE_APPWIDGETS, values, selection, selectionArgs);
+		}
+		case APPWIDGETS_ID: {
+			long appWidgetId = Long.parseLong(uri.getPathSegments().get(1));
+			return db.update(TABLE_APPWIDGETS, values, BaseColumns._ID + "=" + appWidgetId, null);
+		}
+		case FORECASTS: {
+			return db.update(TABLE_FORECASTS, values, selection, selectionArgs);
+		}
+		}
 
-    private static final int FORECASTS = 201;
-    private static final int FORECASTS_ID = 202;
+		throw new UnsupportedOperationException();
+	}
 
-    static {
-        sUriMatcher.addURI(AUTHORITY, "appwidgets", APPWIDGETS);
-        sUriMatcher.addURI(AUTHORITY, "appwidgets/#", APPWIDGETS_ID);
-        sUriMatcher.addURI(AUTHORITY, "appwidgets/#/forecasts", APPWIDGETS_FORECASTS);
-        sUriMatcher.addURI(AUTHORITY, "appwidgets/#/forecast_at/*", APPWIDGETS_FORECAST_AT);
+	/**
+	 * Matcher used to filter an incoming {@link Uri}.
+	 */
+	private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
-        sUriMatcher.addURI(AUTHORITY, "forecasts", FORECASTS);
-        sUriMatcher.addURI(AUTHORITY, "forecasts/#", FORECASTS_ID);
-    }
+	private static final int APPWIDGETS = 101;
+	private static final int APPWIDGETS_ID = 102;
+	private static final int APPWIDGETS_FORECASTS = 103;
+	private static final int APPWIDGETS_FORECAST_AT = 104;
+
+	private static final int FORECASTS = 201;
+	private static final int FORECASTS_ID = 202;
+
+	static {
+		sUriMatcher.addURI(AUTHORITY, "appwidgets", APPWIDGETS);
+		sUriMatcher.addURI(AUTHORITY, "appwidgets/#", APPWIDGETS_ID);
+		sUriMatcher.addURI(AUTHORITY, "appwidgets/#/forecasts", APPWIDGETS_FORECASTS);
+		sUriMatcher.addURI(AUTHORITY, "appwidgets/#/forecast_at/*", APPWIDGETS_FORECAST_AT);
+
+		sUriMatcher.addURI(AUTHORITY, "forecasts", FORECASTS);
+		sUriMatcher.addURI(AUTHORITY, "forecasts/#", FORECASTS_ID);
+	}
 }

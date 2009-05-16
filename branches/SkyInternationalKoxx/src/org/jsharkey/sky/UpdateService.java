@@ -16,7 +16,9 @@
 
 package org.jsharkey.sky;
 
+import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import org.jsharkey.sky.ForecastProvider.AppWidgets;
@@ -31,11 +33,18 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
@@ -51,17 +60,22 @@ public class UpdateService extends Service implements Runnable {
 	private static final String TAG = "UpdateService";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.UPDATE_FREQ,
-			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, };
+			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION, };
 
 	private static final int COL_UPDATE_FREQ = 0;
 	private static final int COL_CONFIGURED = 1;
 	private static final int COL_LAST_UPDATED = 2;
+	private static final int COL_UPDATE_LOCATION = 3;
 
 	/**
 	 * Interval to wait between background widget updates. Every 6 hours is
 	 * plenty to keep background data usage low and still provide fresh data.
 	 */
 	private long update_interval = 6 * DateUtils.HOUR_IN_MILLIS;
+
+	private int update_location = 0;
+
+	private LocationManager lm;
 
 	/**
 	 * When rounding updates to the nearest-top-of-hour, trigger the update
@@ -205,13 +219,22 @@ public class UpdateService extends Service implements Runnable {
 			try {
 				cursor = resolver.query(appWidgetUri, PROJECTION_APPWIDGETS, null, null, null);
 				if (cursor != null && cursor.moveToFirst()) {
+
 					isConfigured = cursor.getInt(COL_CONFIGURED) == AppWidgetsColumns.CONFIGURED_TRUE;
 					update_interval = cursor.getInt(COL_UPDATE_FREQ) * DateUtils.HOUR_IN_MILLIS;
+					update_location = cursor.getInt(COL_UPDATE_LOCATION);
 
 					long lastUpdated = cursor.getLong(COL_LAST_UPDATED);
 					long deltaMinutes = (now - lastUpdated) / DateUtils.MINUTE_IN_MILLIS;
+
 					Log.d(TAG, "Delta since last forecast update is " + deltaMinutes + " min");
-					shouldUpdate = (Math.abs(now - lastUpdated) > FORECAST_CACHE_THROTTLE);
+
+					Log.d(TAG, "but OK ... force update");
+
+					shouldUpdate = true;
+
+					// shouldUpdate = (Math.abs(now - lastUpdated) >
+					// update_interval);
 				}
 			} catch (Exception e) {
 				Log.e(TAG, "Not able to read DB data", e);
@@ -226,6 +249,37 @@ public class UpdateService extends Service implements Runnable {
 				Log.d(TAG, "Not configured yet, so skipping update");
 				continue;
 			} else if (shouldUpdate) {
+
+				if (update_location == AppWidgetsColumns.UPDATE_LOCATION_TRUE) {
+					try {
+						this.lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+						// this.lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+						// 0, 0, this);
+
+						String provider = lm.getBestProvider(new Criteria(), true);
+						Location mLastFix = lm.getLastKnownLocation(provider);
+						if (mLastFix != null) {
+							GeocodeQuery geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
+
+							if (geoResult != null) {
+								ContentValues values = new ContentValues();
+
+								values.put(AppWidgetsColumns.TITLE, geoResult.name);
+								values.put(AppWidgetsColumns.LAT, geoResult.lat);
+								values.put(AppWidgetsColumns.LON, geoResult.lon);
+
+								ContentResolver resolver2 = getContentResolver();
+								resolver2.update(appWidgetUri, values, null, null);
+
+							} else {
+								Log.d(TAG, "not able to refresh location");
+							}
+						}
+					} catch (Exception e) {
+						Log.e(TAG, "Problem getting location", e);
+					}
+				}
+				
 				// Last update is outside throttle window, so update again
 				try {
 					WebserviceHelper.updateForecasts(this, appWidgetUri, FORECAST_DAYS);
@@ -236,51 +290,55 @@ public class UpdateService extends Service implements Runnable {
 
 			// Process this update through the correct provider
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
-			String providerName = info.provider.getClassName();
-			RemoteViews updateViews = null;
+			if (info != null) {
+				String providerName = info.provider.getClassName();
+				RemoteViews updateViews = null;
 
-			if (providerName.equals(MedAppWidget.class.getName())) {
-				updateViews = MedAppWidget.buildUpdate(this, appWidgetUri);
-			} else if (providerName.equals(TinyAppWidget.class.getName())) {
-				updateViews = TinyAppWidget.buildUpdate(this, appWidgetUri);
-			} else if (providerName.equals(LargeAppWidget.class.getName())) {
-				updateViews = LargeAppWidget.buildUpdate(this, appWidgetUri);
-			}
+				if (providerName.equals(MedAppWidget.class.getName())) {
+					updateViews = MedAppWidget.buildUpdate(this, appWidgetUri);
+				} else if (providerName.equals(TinyAppWidget.class.getName())) {
+					updateViews = TinyAppWidget.buildUpdate(this, appWidgetUri);
+				} else if (providerName.equals(LargeAppWidget.class.getName())) {
+					updateViews = LargeAppWidget.buildUpdate(this, appWidgetUri);
+				}
 
-			// Push this update to surface
-			if (updateViews != null) {
-				appWidgetManager.updateAppWidget(appWidgetId, updateViews);
+				// Push this update to surface
+				if (updateViews != null) {
+					appWidgetManager.updateAppWidget(appWidgetId, updateViews);
+				}
 			}
 		}
 
-		// Schedule next update alarm, usually just before a 6-hour block. This
+		// If auto schedule allowed, schedule next update alarm, usually just
+		// before a x-hour block. This
 		// triggers updates at roughly 5:50AM, 11:50AM, 5:50PM, and 11:50PM.
-		Time time = new Time();
-		time.set(System.currentTimeMillis() + update_interval + UPDATE_TRIGGER_EARLY);
-		time.hour -= (time.hour % 6);
-		time.minute = 0;
-		time.second = 0;
+		if (update_interval > 0) {
 
-		long nextUpdate = time.toMillis(false) - UPDATE_TRIGGER_EARLY;
-		long nowMillis = System.currentTimeMillis();
+			Time time = new Time();
+			time.set(System.currentTimeMillis() + update_interval);
 
-		// Throttle our updates just in case the math went funky
-		if (nextUpdate - nowMillis < UPDATE_THROTTLE) {
-			Log.d(TAG, "Calculated next update too early, throttling for a few minutes");
-			nextUpdate = nowMillis + UPDATE_THROTTLE;
+			long nextUpdate = time.toMillis(false);
+			long nowMillis = System.currentTimeMillis();
+
+			// Throttle our updates just in case the math went funky
+			if (nextUpdate - nowMillis < UPDATE_THROTTLE) {
+				Log.d(TAG, "Calculated next update too early, throttling for a few minutes");
+				nextUpdate = nowMillis + UPDATE_THROTTLE;
+			}
+
+			long deltaMinutes = (nextUpdate - nowMillis) / DateUtils.MINUTE_IN_MILLIS;
+			Log.d(TAG, "Requesting next update at " + nextUpdate + ", in " + deltaMinutes + " min");
+
+			Intent updateIntent = new Intent(ACTION_UPDATE_ALL);
+			updateIntent.setClass(this, UpdateService.class);
+
+			PendingIntent pendingIntent = PendingIntent.getService(this, 0, updateIntent, 0);
+
+			// Schedule alarm, and force the device awake for this update
+			AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+			alarmManager.set(AlarmManager.RTC_WAKEUP, nextUpdate, pendingIntent);
+
 		}
-
-		long deltaMinutes = (nextUpdate - nowMillis) / DateUtils.MINUTE_IN_MILLIS;
-		Log.d(TAG, "Requesting next update at " + nextUpdate + ", in " + deltaMinutes + " min");
-
-		Intent updateIntent = new Intent(ACTION_UPDATE_ALL);
-		updateIntent.setClass(this, UpdateService.class);
-
-		PendingIntent pendingIntent = PendingIntent.getService(this, 0, updateIntent, 0);
-
-		// Schedule alarm, and force the device awake for this update
-		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		alarmManager.set(AlarmManager.RTC_WAKEUP, nextUpdate, pendingIntent);
 
 		// No updates remaining, so stop service
 		stopSelf();
@@ -289,5 +347,35 @@ public class UpdateService extends Service implements Runnable {
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
+	}
+
+	private GeocodeQuery GeocoderGetData(GeocodeQuery query) {
+		Geocoder mGeocoder = new Geocoder(this);
+
+		GeocodeQuery result = null;
+
+		try {
+			if (!TextUtils.isEmpty(query.name)) {
+				// Forward geocode using query
+				List<Address> results = mGeocoder.getFromLocationName(query.name, 1);
+				if (results.size() > 0) {
+					result = new GeocodeQuery(results.get(0));
+				}
+			} else if (!Double.isNaN(query.lat) && !Double.isNaN(query.lon)) {
+				// Reverse geocode using location
+				List<Address> results = mGeocoder.getFromLocation(query.lat, query.lon, 1);
+				if (results.size() > 0) {
+					result = new GeocodeQuery(results.get(0));
+					result.lat = query.lat;
+					result.lon = query.lon;
+				} else {
+					result = query;
+				}
+			}
+		} catch (IOException e) {
+			Log.e(TAG, "Problem using geocoder", e);
+		}
+
+		return result;
 	}
 }

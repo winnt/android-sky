@@ -24,7 +24,9 @@ import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
 
 import android.app.Activity;
 import android.app.SearchManager;
+import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -61,6 +63,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private Integer updateFreq = 3;
 	private double mLat = Double.NaN;
 	private double mLon = Double.NaN;
+	private Integer updateLocation = AppWidgetsColumns.UPDATE_LOCATION_FALSE;
 
 	private Button mMap;
 	private Button mSave;
@@ -69,7 +72,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private EditText mEncoding;
 	private EditText mUpdateFreq;
 
-	
 	/**
 	 * Default zoom level when showing map to verify location.
 	 */
@@ -166,51 +168,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	}
 
 	/**
-	 * Temporary object to hold geocoding query and/or results.
-	 */
-	private static class GeocodeQuery {
-		String name = null;
-
-		double lat = Double.NaN;
-		double lon = Double.NaN;
-
-		public GeocodeQuery(String query) {
-			name = query;
-		}
-
-		public GeocodeQuery(Location location) {
-			lat = location.getLatitude();
-			lon = location.getLongitude();
-		}
-
-		/**
-		 * Summarize details of the given {@link Address}, walking down a
-		 * prioritized list of names until valid text is found to describe it.
-		 */
-		public GeocodeQuery(Address address) {
-			name = address.getLocality();
-			if (name == null) {
-				name = address.getFeatureName();
-			}
-			if (name == null) {
-				name = address.getAdminArea();
-			}
-			if (name == null) {
-				name = address.getPostalCode();
-			}
-			if (name == null) {
-				name = address.getCountryName();
-			}
-
-			// Fill in coordinates, if given
-			if (address.hasLatitude() && address.hasLongitude()) {
-				lat = address.getLatitude();
-				lon = address.getLongitude();
-			}
-		}
-	}
-
-	/**
 	 * Enable or disable any GUI actions, including text fields and buttons.
 	 */
 	protected void setActionEnabled(boolean enabled) {
@@ -235,16 +192,19 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mLang = (EditText) findViewById(R.id.conf_lang);
 		mEncoding = (EditText) findViewById(R.id.conf_encoding);
 		mUpdateFreq = (EditText) findViewById(R.id.conf_update_freq);
-		
+
 		// Picked save, so write values to backend
 
 		mLang.setText(lang);
 		mEncoding.setText(encoding);
-		mUpdateFreq.setText(((Integer)updateFreq).toString());
-		
-		((RadioButton) findViewById(R.id.conf_current)).setOnClickListener(this);
-		((RadioButton) findViewById(R.id.conf_manual)).setOnClickListener(this);
+		mUpdateFreq.setText(((Integer) updateFreq).toString());
 
+		((RadioButton) findViewById(R.id.conf_current_and_refreshed)).setOnClickListener(this);
+		((RadioButton) findViewById(R.id.conf_manual)).setOnClickListener(this);
+		((RadioButton) findViewById(R.id.conf_current)).setOnClickListener(this);
+		
+		((RadioButton) findViewById(R.id.conf_current)).setSelected(true);
+		
 		mMap = (Button) findViewById(R.id.conf_map);
 		mSave = (Button) findViewById(R.id.conf_save);
 
@@ -261,12 +221,10 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		// TODO: handle editing an existing widget by reading values
 
-		// If restoring, read location and units from bundle
+		// If restoring, read location from bundle
 		if (savedInstanceState != null) {
 			mLat = savedInstanceState.getDouble(AppWidgetsColumns.LAT);
 			mLon = savedInstanceState.getDouble(AppWidgetsColumns.LON);
-
-			// mLang.setText(savedInstanceState.getString(AppWidgetsColumns.LANG));
 		}
 
 		// Start listener to find current location
@@ -316,12 +274,11 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		try {
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			mUpdateFreq.setText("3");
 			updateFreq = 3;
 		}
-		
+
 		outState.putDouble(AppWidgetsColumns.LAT, mLat);
 		outState.putDouble(AppWidgetsColumns.LON, mLon);
 		outState.putString(AppWidgetsColumns.LANG, lang);
@@ -334,11 +291,19 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		case R.id.conf_current: {
 			// Picked current location, start geocode to find location name
 			startGeocode(mLastFix);
+			updateLocation = AppWidgetsColumns.UPDATE_LOCATION_FALSE;
+			break;
+		}
+		case R.id.conf_current_and_refreshed: {
+			// Picked current location, start geocode to find location name
+			startGeocode(mLastFix);
+			updateLocation = AppWidgetsColumns.UPDATE_LOCATION_TRUE;
 			break;
 		}
 		case R.id.conf_manual: {
 			// Picked manual search, so trigger search dialog
 			onSearchRequested();
+			updateLocation = AppWidgetsColumns.UPDATE_LOCATION_FALSE;
 			break;
 		}
 		case R.id.conf_map: {
@@ -356,9 +321,9 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			ContentValues values = new ContentValues();
 			String title = mTitle.getText().toString();
 			lang = mLang.getText().toString();
-			encoding= mEncoding.getText().toString();
+			encoding = mEncoding.getText().toString();
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
-			
+				
 			values.put(BaseColumns._ID, mAppWidgetId);
 			values.put(AppWidgetsColumns.TITLE, title);
 			values.put(AppWidgetsColumns.LAT, mLat);
@@ -366,6 +331,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			values.put(AppWidgetsColumns.LANG, lang);
 			values.put(AppWidgetsColumns.ENCODING, encoding);
 			values.put(AppWidgetsColumns.UPDATE_FREQ, updateFreq);
+			values.put(AppWidgetsColumns.UPDATE_LOCATION, updateLocation);
 			values.put(AppWidgetsColumns.LAST_UPDATED, -1);
 			values.put(AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.CONFIGURED_TRUE);
 
@@ -375,8 +341,20 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 			// Trigger pushing a widget update to surface
 			UpdateService.requestUpdate(new int[] { mAppWidgetId });
-			startService(new Intent(this, UpdateService.class));
+			ComponentName updateService = startService(new Intent(this, UpdateService.class));
 
+			if (null == updateService){
+			    // something really wrong here
+			    Log.e(TAG, "Could not start location service");
+			   }
+//
+//			ComponentName locationService = startService(new Intent(this, LocationService.class));
+//
+//			if (null == locationService){
+//			    // something really wrong here
+//			    Log.e(TAG, "Could not start location service");
+//			   }
+			
 			setConfigureResult(Activity.RESULT_OK);
 			finish();
 
