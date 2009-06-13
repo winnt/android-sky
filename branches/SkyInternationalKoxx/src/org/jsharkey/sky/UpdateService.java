@@ -41,8 +41,11 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -60,12 +63,14 @@ public class UpdateService extends Service implements Runnable {
 	private static final String TAG = "UpdateService";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.UPDATE_FREQ,
-			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION, };
+			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION,
+			AppWidgetsColumns.UPDATE_STATUS, };
 
 	private static final int COL_UPDATE_FREQ = 0;
 	private static final int COL_CONFIGURED = 1;
 	private static final int COL_LAST_UPDATED = 2;
 	private static final int COL_UPDATE_LOCATION = 3;
+	private static final int COL_UPDATE_STATUS = 4;
 
 	/**
 	 * Interval to wait between background widget updates. Every 6 hours is
@@ -76,33 +81,21 @@ public class UpdateService extends Service implements Runnable {
 	private int update_location = 0;
 
 	private LocationManager lm;
+	private LocationListener myLocationListener;
 
-	/**
-	 * When rounding updates to the nearest-top-of-hour, trigger the update
-	 * slightly early by this amount. This makes sure that we're already updated
-	 * when the user's 6AM alarm clock goes off.
-	 */
-	private static final long UPDATE_TRIGGER_EARLY = 10 * DateUtils.MINUTE_IN_MILLIS;
+	private static final double TEST_SPEED_MULTIPLIER =  1.0;
 
 	/**
 	 * If we calculated an update too quickly in the future, wait this interval
 	 * and try rescheduling.
 	 */
-	private static final long UPDATE_THROTTLE = 30 * DateUtils.MINUTE_IN_MILLIS;
+	private static final long UPDATE_THROTTLE = (long) (10 * TEST_SPEED_MULTIPLIER * DateUtils.MINUTE_IN_MILLIS);
 
 	/**
 	 * Specific {@link Intent#setAction(String)} used when performing a full
 	 * update of all widgets, usually when an update alarm goes off.
 	 */
 	public static final String ACTION_UPDATE_ALL = "org.jsharkey.sky.UPDATE_ALL";
-
-	/**
-	 * Length of time before we consider cached forecasts stale. If a widget
-	 * update is requested, and {@link AppWidgetsColumns#LAST_UPDATED} is inside
-	 * this threshold, we use the cached forecast data to build the update.
-	 * Otherwise, we first trigger an update through {@link WebserviceHelper}.
-	 */
-	private static final long FORECAST_CACHE_THROTTLE = 3 * DateUtils.HOUR_IN_MILLIS;
 
 	/**
 	 * Number of days into the future to request forecasts for.
@@ -169,6 +162,20 @@ public class UpdateService extends Service implements Runnable {
 		}
 	}
 
+	@Override
+	public void onCreate() {
+		super.onCreate();
+
+		// initialise location refresh
+		Log.d(TAG, "initialise location refresh");
+
+		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		myLocationListener = new myLocationListener();
+		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10 * DateUtils.MINUTE_IN_MILLIS, 0,
+				myLocationListener);
+
+	}
+
 	/**
 	 * Start this service, creating a background processing thread, if not
 	 * already running. If started with {@link #ACTION_UPDATE_ALL}, will
@@ -196,6 +203,25 @@ public class UpdateService extends Service implements Runnable {
 		}
 	}
 
+	private class myLocationListener implements LocationListener {
+		public void onLocationChanged(Location location) {
+
+			Log.d(TAG, "Location updated !!!!!!!!!!!!!! (" + location.getLatitude() + " - " + location.getLongitude()
+					+ ")");
+
+			lm.removeUpdates(this);
+		}
+
+		public void onProviderDisabled(String provider) {
+		}
+
+		public void onProviderEnabled(String provider) {
+		}
+
+		public void onStatusChanged(String provider, int status, Bundle extras) {
+		}
+	};
+
 	/**
 	 * Main thread for running through any requested widget updates until none
 	 * remain. Also sets alarm to perform next update.
@@ -204,6 +230,8 @@ public class UpdateService extends Service implements Runnable {
 		Log.d(TAG, "Processing thread started");
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 		ContentResolver resolver = getContentResolver();
+
+		boolean generalUpdateStatusOk = true;
 
 		long now = System.currentTimeMillis();
 
@@ -215,13 +243,14 @@ public class UpdateService extends Service implements Runnable {
 			Cursor cursor = null;
 			boolean isConfigured = false;
 			boolean shouldUpdate = false;
+			boolean updateStatusOk = true;
 
 			try {
 				cursor = resolver.query(appWidgetUri, PROJECTION_APPWIDGETS, null, null, null);
 				if (cursor != null && cursor.moveToFirst()) {
 
 					isConfigured = cursor.getInt(COL_CONFIGURED) == AppWidgetsColumns.CONFIGURED_TRUE;
-					update_interval = cursor.getInt(COL_UPDATE_FREQ) * DateUtils.HOUR_IN_MILLIS;
+					update_interval = (long) (cursor.getInt(COL_UPDATE_FREQ) * TEST_SPEED_MULTIPLIER * DateUtils.HOUR_IN_MILLIS);
 					update_location = cursor.getInt(COL_UPDATE_LOCATION);
 
 					long lastUpdated = cursor.getLong(COL_LAST_UPDATED);
@@ -233,8 +262,6 @@ public class UpdateService extends Service implements Runnable {
 
 					shouldUpdate = true;
 
-					// shouldUpdate = (Math.abs(now - lastUpdated) >
-					// update_interval);
 				}
 			} catch (Exception e) {
 				Log.e(TAG, "Not able to read DB data", e);
@@ -253,41 +280,70 @@ public class UpdateService extends Service implements Runnable {
 				if (update_location == AppWidgetsColumns.UPDATE_LOCATION_TRUE) {
 					try {
 						this.lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-						// this.lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-						// 0, 0, this);
 
-						String provider = lm.getBestProvider(new Criteria(), true);
-						Location mLastFix = lm.getLastKnownLocation(provider);
-						if (mLastFix != null) {
-							GeocodeQuery geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
+						// check if network location provider is available
+						LocationProvider provider = lm.getProvider(LocationManager.NETWORK_PROVIDER);
 
-							if (geoResult != null) {
-								ContentValues values = new ContentValues();
+						if (provider != null) {
 
-								values.put(AppWidgetsColumns.TITLE, geoResult.name);
-								values.put(AppWidgetsColumns.LAT, geoResult.lat);
-								values.put(AppWidgetsColumns.LON, geoResult.lon);
+							Location mLastFix = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-								ContentResolver resolver2 = getContentResolver();
-								resolver2.update(appWidgetUri, values, null, null);
+							if (mLastFix != null) {
+								GeocodeQuery geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
 
+								if (geoResult != null) {
+									ContentValues values = new ContentValues();
+
+									values.put(AppWidgetsColumns.TITLE, geoResult.name);
+									values.put(AppWidgetsColumns.LAT, geoResult.lat);
+									values.put(AppWidgetsColumns.LON, geoResult.lon);
+
+									ContentResolver resolver2 = getContentResolver();
+									resolver2.update(appWidgetUri, values, null, null);
+
+								} else {
+									Log.d(TAG, "not able to refresh location");
+									updateStatusOk = false;
+								}
 							} else {
 								Log.d(TAG, "not able to refresh location");
+								updateStatusOk = false;
 							}
+						}
+						else
+						{
+							Log.d(TAG, "not able to refresh location - provider not available");
+							updateStatusOk = false;
 						}
 					} catch (Exception e) {
 						Log.e(TAG, "Problem getting location", e);
+						updateStatusOk = false;
 					}
 				}
-				
+
 				// Last update is outside throttle window, so update again
 				try {
 					WebserviceHelper.updateForecasts(this, appWidgetUri, FORECAST_DAYS);
 				} catch (ForecastParseException e) {
 					Log.e(TAG, "Problem parsing forecast", e);
+					updateStatusOk = false;
 				}
 			}
 
+			// save update status
+			ContentValues values = new ContentValues();
+			if (updateStatusOk)
+				values.put(AppWidgetsColumns.UPDATE_STATUS, AppWidgetsColumns.UPDATE_STATUS_OK);
+			else
+				values.put(AppWidgetsColumns.UPDATE_STATUS, AppWidgetsColumns.UPDATE_STATUS_FAILURE);
+
+			ContentResolver resolver2 = getContentResolver();
+			resolver2.update(appWidgetUri, values, null, null);
+
+			// set general update status to false to request a faster update
+			if (updateStatusOk = false)
+				generalUpdateStatusOk = false;
+			
 			// Process this update through the correct provider
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
 			if (info != null) {
@@ -315,8 +371,13 @@ public class UpdateService extends Service implements Runnable {
 		if (update_interval > 0) {
 
 			Time time = new Time();
-			time.set(System.currentTimeMillis() + update_interval);
-
+			
+			// if an update fail, request a faster update
+			if (generalUpdateStatusOk)
+				time.set(System.currentTimeMillis() + update_interval);
+			else
+				time.set(System.currentTimeMillis() + (update_interval / 10));
+				
 			long nextUpdate = time.toMillis(false);
 			long nowMillis = System.currentTimeMillis();
 
@@ -353,27 +414,32 @@ public class UpdateService extends Service implements Runnable {
 		Geocoder mGeocoder = new Geocoder(this);
 
 		GeocodeQuery result = null;
+		int retries = 0;
 
-		try {
-			if (!TextUtils.isEmpty(query.name)) {
-				// Forward geocode using query
-				List<Address> results = mGeocoder.getFromLocationName(query.name, 1);
-				if (results.size() > 0) {
-					result = new GeocodeQuery(results.get(0));
+		while ((result == null) && (retries < 3)) {
+			try {
+				if (!TextUtils.isEmpty(query.name)) {
+					// Forward geocode using query
+					List<Address> results = mGeocoder.getFromLocationName(query.name, 1);
+					if (results.size() > 0) {
+						result = new GeocodeQuery(results.get(0));
+					}
+				} else if (!Double.isNaN(query.lat) && !Double.isNaN(query.lon)) {
+					// Reverse geocode using location
+					List<Address> results = mGeocoder.getFromLocation(query.lat, query.lon, 1);
+					if (results.size() > 0) {
+						result = new GeocodeQuery(results.get(0));
+						result.lat = query.lat;
+						result.lon = query.lon;
+					} else {
+						result = query;
+					}
 				}
-			} else if (!Double.isNaN(query.lat) && !Double.isNaN(query.lon)) {
-				// Reverse geocode using location
-				List<Address> results = mGeocoder.getFromLocation(query.lat, query.lon, 1);
-				if (results.size() > 0) {
-					result = new GeocodeQuery(results.get(0));
-					result.lat = query.lat;
-					result.lon = query.lon;
-				} else {
-					result = query;
-				}
+			} catch (IOException e) {
+				Log.e(TAG, "Problem using geocoder", e);
 			}
-		} catch (IOException e) {
-			Log.e(TAG, "Problem using geocoder", e);
+
+			retries++;
 		}
 
 		return result;
