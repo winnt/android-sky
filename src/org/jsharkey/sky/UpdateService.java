@@ -376,7 +376,7 @@ public class UpdateService extends Service implements Runnable {
 			if (generalUpdateStatusOk)
 				time.set(System.currentTimeMillis() + update_interval);
 			else
-				time.set(System.currentTimeMillis() + (update_interval / 10));
+				time.set(System.currentTimeMillis() + (update_interval / 5));
 				
 			long nextUpdate = time.toMillis(false);
 			long nowMillis = System.currentTimeMillis();

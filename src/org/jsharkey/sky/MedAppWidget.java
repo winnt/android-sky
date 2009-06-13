@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
@@ -43,12 +44,14 @@ public class MedAppWidget extends AppWidgetProvider {
 	private static final String TAG = "MedAppWidget";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TITLE,
-			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.UPDATE_STATUS };
+			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.UPDATE_STATUS,
+			AppWidgetsColumns.SKIN, };
 
 	private static final int COL_TITLE = 0;
 	private static final int COL_TEMP_UNIT = 1;
 	private static final int COL_CURRENT_TEMP = 2;
 	private static final int COL_UPDATE_STATUS = 3;
+	private static final int COL_SKIN = 4;
 
 	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.CONDITIONS,
 			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL, };
@@ -97,7 +100,9 @@ public class MedAppWidget extends AppWidgetProvider {
 
 		boolean daytime = ForecastUtils.isDaytime();
 		boolean forecastFilled = false;
-
+		String skinName = "";
+		boolean useSkin = false;
+		
 		ContentResolver resolver = context.getContentResolver();
 		Resources res = context.getResources();
 
@@ -115,10 +120,15 @@ public class MedAppWidget extends AppWidgetProvider {
 				views.setTextViewText(R.id.location, title);
 
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
-
 				current_temp = cursor.getInt(COL_CURRENT_TEMP);
-				
 				update_status = cursor.getInt(COL_UPDATE_STATUS);
+				skinName = cursor.getString(COL_SKIN);
+
+				if (skinName.equals(""))
+					useSkin = false;
+				else
+					useSkin = true;
+					
 			}
 		} finally {
 			if (cursor != null) {
@@ -137,7 +147,7 @@ public class MedAppWidget extends AppWidgetProvider {
 
 				String icon_url = cursor.getString(COL_ICON_URL);
 
-				int iconResource = ForecastUtils.getIconForForecast(icon_url, daytime);
+				Bitmap iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
 
 				int tempHigh = cursor.getInt(COL_TEMP_HIGH);
 				int tempLow = cursor.getInt(COL_TEMP_LOW);
@@ -149,7 +159,7 @@ public class MedAppWidget extends AppWidgetProvider {
 					views.setTextViewText(R.id.update_status, "");
 
 				views.setTextViewText(R.id.conditions, conditions);
-				views.setImageViewResource(R.id.icon, iconResource);
+				views.setImageViewBitmap(R.id.icon, iconResource);
 
 				views.setTextViewText(R.id.current_temp, ((Integer) current_temp).toString() + temp_unit_str);
 

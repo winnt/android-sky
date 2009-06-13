@@ -127,6 +127,21 @@
             android:layout_marginRight="20dip"
             android:freezesText="true" />
 
+        <TextView
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content"
+            android:padding="10dip"
+            android:text="@string/conf_skin_choice"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <EditText
+            android:id="@+id/conf_skin"
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dip"
+            android:layout_marginRight="20dip"
+            android:freezesText="true" />
+            
         <View
             android:layout_width="fill_parent"
             android:layout_height="0dip"

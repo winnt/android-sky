@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
@@ -43,10 +44,13 @@ public class TinyAppWidget extends AppWidgetProvider {
 	private static final String TAG = "TinyAppWidget";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TEMP_UNIT,
-			AppWidgetsColumns.CURRENT_TEMP, };
+			AppWidgetsColumns.CURRENT_TEMP, 
+			AppWidgetsColumns.SKIN, };
 
 	private static final int COL_TEMP_UNIT = 0;
 	private static final int COL_CURRENT_TEMP = 1;
+	private static final int COL_SKIN = 2;
+	
 
 	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.TEMP_HIGH,
 			ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL, };
@@ -101,6 +105,9 @@ public class TinyAppWidget extends AppWidgetProvider {
 		String temp_unit_str = "";
 		int current_temp = 0;
 
+		String skinName = "";
+		boolean useSkin = false;
+		
 		Cursor cursor = null;
 
 		// Pull out desired temperature units
@@ -110,6 +117,13 @@ public class TinyAppWidget extends AppWidgetProvider {
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
 
 				current_temp = cursor.getInt(COL_CURRENT_TEMP);
+
+				skinName = cursor.getString(COL_SKIN);
+
+				if (skinName.equals(""))
+					useSkin = false;
+				else
+					useSkin = true;
 			}
 		} finally {
 			if (cursor != null) {
@@ -126,12 +140,12 @@ public class TinyAppWidget extends AppWidgetProvider {
 
 				String icon_url = cursor.getString(COL_ICON_URL);
 
-				int iconResource = ForecastUtils.getIconForForecast(icon_url, daytime);
+				Bitmap iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
 
 				int tempHigh = cursor.getInt(COL_TEMP_HIGH);
 				int tempLow = cursor.getInt(COL_TEMP_LOW);
 
-				views.setImageViewResource(R.id.icon, iconResource);
+				views.setImageViewBitmap(R.id.icon, iconResource);
 
 				views.setTextViewText(R.id.current_temp, ((Integer) current_temp).toString() + temp_unit_str);
 
