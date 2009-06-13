@@ -32,7 +32,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -51,6 +50,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+
 
 /**
  * Activity to configure forecast widgets. Usually launched automatically by an
@@ -73,7 +73,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private EditText mLang;
 	private EditText mEncoding;
 	private EditText mUpdateFreq;
-
+	private EditText mSkinName;
+	
 	/**
 	 * Default zoom level when showing map to verify location.
 	 */
@@ -179,6 +180,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mLang.setEnabled(enabled);
 		mEncoding.setEnabled(enabled);
 		mUpdateFreq.setEnabled(enabled);
+		mSkinName.setEnabled(enabled);
 	}
 
 	@Override
@@ -194,6 +196,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mLang = (EditText) findViewById(R.id.conf_lang);
 		mEncoding = (EditText) findViewById(R.id.conf_encoding);
 		mUpdateFreq = (EditText) findViewById(R.id.conf_update_freq);
+		mSkinName = (EditText) findViewById(R.id.conf_skin);
 
 		// Picked save, so write values to backend
 
@@ -353,7 +356,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			lang = mLang.getText().toString();
 			encoding = mEncoding.getText().toString();
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
-
+			String skinName = mSkinName.getText().toString();
+			
 			values.put(BaseColumns._ID, mAppWidgetId);
 			values.put(AppWidgetsColumns.TITLE, title);
 			values.put(AppWidgetsColumns.LAT, mLat);
@@ -362,6 +366,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			values.put(AppWidgetsColumns.ENCODING, encoding);
 			values.put(AppWidgetsColumns.UPDATE_FREQ, updateFreq);
 			values.put(AppWidgetsColumns.UPDATE_LOCATION, updateLocation);
+			values.put(AppWidgetsColumns.SKIN, skinName);
 			values.put(AppWidgetsColumns.LAST_UPDATED, -1);
 			values.put(AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.CONFIGURED_TRUE);
 

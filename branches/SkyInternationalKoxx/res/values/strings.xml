@@ -34,6 +34,7 @@
     <string name="conf_lang_choice">Enter a language choice (fr, en, en-GB for UK, es, fi ...), it will also configure °C/°F :</string>
 	<string name="conf_encoding_choice">Enter a language encoding (iso-8859-1 for latin) :</string>
 	<string name="conf_update_freq_choice">Enter update frequency (in hours, set 0 for manual update only) :</string>
+	<string name="conf_skin_choice">Enter exact skin name from sdcard (leave empty for internal skin) :</string>
     <string name="conf_determ">Searching\u2026</string>
     <string name="conf_nofix">No current location fix</string>
     <string name="conf_error">Error geocoding location</string>

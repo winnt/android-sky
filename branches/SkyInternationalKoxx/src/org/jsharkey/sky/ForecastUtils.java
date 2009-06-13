@@ -18,16 +18,22 @@ package org.jsharkey.sky;
 
 import java.util.regex.Pattern;
 
-import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
 import org.jsharkey.sky.ForecastProvider.ForecastsColumns;
 
+import android.app.Application;
+import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Environment;
 import android.text.format.Time;
 
 /**
  * Various forecast utilities.
  */
 public class ForecastUtils {
+
 	/**
 	 * Time when we consider daytime to begin. We keep this early to make sure
 	 * that our 6AM widget update will change icons correctly.
@@ -42,8 +48,10 @@ public class ForecastUtils {
 
 	private static final Pattern sIconAlert = Pattern.compile("alert|advisory|warning|watch|dust|smoke",
 			Pattern.CASE_INSENSITIVE);
-	private static final Pattern sIconStorm = Pattern.compile("thunderstorm|storm|chance_of_storm", Pattern.CASE_INSENSITIVE);
-	private static final Pattern sIconSnow = Pattern.compile("chance_of_snow|snow|frost|flurries|sleet", Pattern.CASE_INSENSITIVE);
+	private static final Pattern sIconStorm = Pattern.compile("thunderstorm|storm|chance_of_storm",
+			Pattern.CASE_INSENSITIVE);
+	private static final Pattern sIconSnow = Pattern.compile("chance_of_snow|snow|frost|flurries|sleet",
+			Pattern.CASE_INSENSITIVE);
 	private static final Pattern sIconIcy = Pattern.compile("icy", Pattern.CASE_INSENSITIVE);
 	private static final Pattern sIconShower = Pattern.compile("rain", Pattern.CASE_INSENSITIVE);
 	private static final Pattern sIconScatter = Pattern.compile("chance_of_rain|mist", Pattern.CASE_INSENSITIVE);
@@ -62,67 +70,96 @@ public class ForecastUtils {
 	 *            otherwise assume night icons.
 	 */
 
+	public static Bitmap getIconBitmapForForecast(Context context, String icon_url, boolean daytime, boolean useSkin,
+			String skinName) {
+
+		Bitmap icon;
+
+		if (useSkin) {
+			String bitmapResourcePath = getIconBitmapForForecast(icon_url, daytime);
+			BitmapDrawable iconBitmap = new BitmapDrawable(Environment.getExternalStorageDirectory() + "/"
+					+ context.getPackageName() + "/skins/" + skinName + "/" + bitmapResourcePath);
+			icon = iconBitmap.getBitmap();
+		} else {
+			icon = BitmapFactory.decodeResource(context.getResources(), getInternalIconForForecast(icon_url, daytime));
+		}
+		return icon;
+	}
+
 	/*
-	 * google icons
+	 * google icons to bitmap
+	 */
+	public static String getIconBitmapForForecast(String icon_url, boolean daytime) {
+
+		String conditionsSplit[] = icon_url.split("/");
+		String iconName = conditionsSplit[conditionsSplit.length - 1].replace(".png", "");
+		iconName = iconName.replace(".gif", ".png");
+
+		return iconName;
+	}
+
+	/*
+	 * google icons to drawable
 	 */
 
-	public static int getIconForForecast(String icon_url, boolean daytime) {
-		int icon = 0;
-		
+	public static int getInternalIconForForecast(String icon_url, boolean daytime) {
+		int iconResId = 0;
+
 		String conditionsSplit[] = icon_url.split("/");
-		String conditions = conditionsSplit[conditionsSplit.length-1].replace(".png", "");
-		
+		String conditions = conditionsSplit[conditionsSplit.length - 1].replace(".gif", "");
+
 		// images/weather/dust.gif ----------- sIconAlert
 		// images/weather/smoke.gif ----------- sIconAlert
 		if (sIconAlert.matcher(conditions).find()) {
-			icon = R.drawable.weather_severe_alert;
+			iconResId = R.drawable.weather_severe_alert;
 		} else
 		// images/weather/haze.gif ----------- sIconHazeAlert
 		// images/weather/fog.gif ----------- sIconHazeAlert
 		if (sIconHazeAlert.matcher(conditions).find()) {
-			icon = R.drawable.weather_haze_alert;
+			iconResId = R.drawable.weather_haze_alert;
 		} else
 		// images/weather/partly_cloudy.gif ----------- sIconFewClouds
 		if (sIconFewClouds.matcher(conditions).find()) {
-			icon = daytime ? R.drawable.weather_few_clouds : R.drawable.weather_few_clouds_night;
+			iconResId = daytime ? R.drawable.weather_few_clouds : R.drawable.weather_few_clouds_night;
 		} else
-			// images/weather/cloudy.gif ----------- sIconBigClouds
-			// images/weather/mostly_cloudy.gif ----------- sIconBigClouds
+		// images/weather/cloudy.gif ----------- sIconBigClouds
+		// images/weather/mostly_cloudy.gif ----------- sIconBigClouds
 		if (sIconBigClouds.matcher(conditions).find()) {
-			icon = daytime ? R.drawable.weather_big_clouds : R.drawable.weather_few_clouds_night;
+			iconResId = daytime ? R.drawable.weather_big_clouds : R.drawable.weather_few_clouds_night;
 		} else
 		// images/weather/icy.gif ----------- sIconIcy
 		if (sIconIcy.matcher(conditions).find()) {
-			icon = R.drawable.weather_snow_icy;
+			iconResId = R.drawable.weather_snow_icy;
 		} else
 		// images/weather/chance_of_storm.gif ----------- sIconStorm
 		// images/weather/storm.gif ----------- sIconStorm
 		// images/weather/thunderstorm.gif ----------- sIconStorm
 		if (sIconStorm.matcher(conditions).find()) {
-			icon = R.drawable.weather_storm;
+			iconResId = R.drawable.weather_storm;
 		} else
 		// images/weather/chance_of_snow.gif ----------- sIconSnow
 		// images/weather/snow.gif ----------- sIconSnow
 		// images/weather/sleet.gif ----------- sIconSnow
 		if (sIconSnow.matcher(conditions).find()) {
-			icon = R.drawable.weather_snow;
+			iconResId = R.drawable.weather_snow;
 
 		} else
 		// images/weather/chance_of_rain.gif ----------- sIconScatter
 		// images/weather/mist.gif ----------- sIconScatter
 		if (sIconScatter.matcher(conditions).find()) {
-			icon = R.drawable.weather_showers_scattered;
+			iconResId = R.drawable.weather_showers_scattered;
 		} else
 		// images/weather/rain.gif ----------- sIconShower
 		if (sIconShower.matcher(conditions).find()) {
-			icon = R.drawable.weather_showers;
+			iconResId = R.drawable.weather_showers;
 		} else
 		// images/weather/sunny.gif ----------- sIconClear
 		// images/weather/mostly_sunny.gif ----------- sIconClear
 		if (sIconClear.matcher(conditions).find()) {
-			icon = daytime ? R.drawable.weather_clear : R.drawable.weather_clear_night;
+			iconResId = daytime ? R.drawable.weather_clear : R.drawable.weather_clear_night;
 		}
-		return icon;
+
+		return iconResId;
 	}
 
 	/**

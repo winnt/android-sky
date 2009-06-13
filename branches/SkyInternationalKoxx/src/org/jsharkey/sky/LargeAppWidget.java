@@ -30,11 +30,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
-import android.view.View;
 import android.widget.RemoteViews;
 
 /**
@@ -45,12 +46,14 @@ public class LargeAppWidget extends AppWidgetProvider {
 	private static final String TAG = "LargeAppWidget";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TITLE,
-			AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.UPDATE_STATUS };
+			AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.UPDATE_STATUS,
+			AppWidgetsColumns.SKIN };
 
 	private static final int COL_TITLE = 0;
 	private static final int COL_CURRENT_TEMP = 1;
 	private static final int COL_TEMP_UNIT = 2;
 	private static final int COL_UPDATE_STATUS = 3;
+	private static final int COL_SKIN = 4;
 
 	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.TEMP_HIGH,
 			ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL, ForecastsColumns.VALID_START };
@@ -59,6 +62,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 	private static final int COL_TEMP_LOW = 1;
 	private static final int COL_ICON_URL = 2;
 	private static final int COL_VALID_START = 3;
+
 
 	/**
 	 * {@inheritDoc}
@@ -103,6 +107,9 @@ public class LargeAppWidget extends AppWidgetProvider {
 		int current_temp = 0;
 		int update_status = AppWidgetsColumns.UPDATE_STATUS_FAILURE;
 
+		String skinName = "";
+		boolean useSkin = false;
+			
 		ContentResolver resolver = context.getContentResolver();
 		Resources res = context.getResources();
 
@@ -116,7 +123,13 @@ public class LargeAppWidget extends AppWidgetProvider {
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
 				current_temp = cursor.getInt(COL_CURRENT_TEMP);
 				update_status = cursor.getInt(COL_UPDATE_STATUS);
+				skinName = cursor.getString(COL_SKIN);
 
+				if (skinName.equals(""))
+					useSkin = false;
+				else
+					useSkin = true;
+				
 				views.setTextViewText(R.id.location, title);
 			}
 		} finally {
@@ -133,7 +146,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 			if (cursor != null && cursor.moveToFirst()) {
 
 				String icon_url = "";
-				int iconResource = 0;
+				Bitmap iconResource;
 				Time mTime = new Time();
 				String dayOfWeek = "";
 				int tempHigh = 0;
@@ -150,8 +163,8 @@ public class LargeAppWidget extends AppWidgetProvider {
 
 				// day 1
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconForForecast(icon_url, daytime);
-				views.setImageViewResource(R.id.icon1, iconResource);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				views.setImageViewBitmap(R.id.icon1, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
 				views.setTextViewText(R.id.day1, dayOfWeek);
@@ -163,8 +176,8 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 2
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconForForecast(icon_url, true);
-				views.setImageViewResource(R.id.icon2, iconResource);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				views.setImageViewBitmap(R.id.icon2, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
 				views.setTextViewText(R.id.day2, dayOfWeek);
@@ -176,8 +189,8 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 3
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconForForecast(icon_url, true);
-				views.setImageViewResource(R.id.icon3, iconResource);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				views.setImageViewBitmap(R.id.icon3, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
 				views.setTextViewText(R.id.day3, dayOfWeek);
@@ -189,8 +202,8 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 4
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconForForecast(icon_url, true);
-				views.setImageViewResource(R.id.icon4, iconResource);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				views.setImageViewBitmap(R.id.icon4, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
 				views.setTextViewText(R.id.day4, dayOfWeek);

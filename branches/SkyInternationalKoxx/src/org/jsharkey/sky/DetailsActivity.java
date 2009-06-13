@@ -25,8 +25,8 @@ import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -54,10 +54,11 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 	private ListAdapter mAdapter;
 
 	private static final String[] PROJECTION_APPWIDGET = { BaseColumns._ID, AppWidgetsColumns.TITLE,
-			AppWidgetsColumns.TEMP_UNIT, };
+			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.SKIN, };
 
 	private static final int COL_TITLE = 1;
 	private static final int COL_TEMP_UNIT = 2;
+	private static final int COL_SKIN = 3;
 
 	private static final String[] PROJECTION_FORECAST = new String[] { BaseColumns._ID, ForecastsColumns.VALID_START,
 			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.CONDITIONS, ForecastsColumns.URL,
@@ -71,6 +72,9 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 	private static final int COL_ICON_URL = 6;
 
 	private String temp_unit_str = "";
+
+	String skinName = "";
+	boolean useSkin = false;
 
 	private int widget_id;
 
@@ -119,6 +123,12 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 				setTitle(getString(R.string.detail_title, titleString));
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
 
+				skinName = cursor.getString(COL_SKIN);
+
+				if (skinName.equals(""))
+					useSkin = false;
+				else
+					useSkin = true;
 			}
 		} finally {
 			if (cursor != null) {
@@ -154,7 +164,6 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 	 * various {@link ForecastsColumns} values into list items.
 	 */
 	private class ForecastAdapter extends ResourceCursorAdapter {
-		private final Resources mResources;
 		private final Time mTime = new Time();
 
 		/**
@@ -164,7 +173,6 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 		 */
 		public ForecastAdapter(Context context, Cursor cursor) {
 			super(context, R.layout.details_item, cursor);
-			mResources = context.getResources();
 		}
 
 		/**
@@ -179,9 +187,6 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 			TextView high = (TextView) view.findViewById(R.id.high);
 			TextView low = (TextView) view.findViewById(R.id.low);
 
-			ContentResolver resolver = context.getContentResolver();
-			Resources res = context.getResources();
-
 			// Figure out day-of-week acronym to use
 			mTime.set(cursor.getLong(COL_VALID_START));
 			String dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
@@ -193,8 +198,8 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 
 			// Always assume daytime for list icons
 			String icon_url = cursor.getString(COL_ICON_URL);
-			int iconResource = ForecastUtils.getIconForForecast(icon_url, true);
-			icon.setImageResource(iconResource);
+			Bitmap iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, true, useSkin, skinName);
+			icon.setImageBitmap(iconResource);
 
 			// Format and insert temperature values, if found
 			int tempHigh = cursor.getInt(COL_TEMP_HIGH);
