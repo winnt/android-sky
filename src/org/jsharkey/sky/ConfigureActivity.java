@@ -35,12 +35,15 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -64,7 +67,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private double mLat = Double.NaN;
 	private double mLon = Double.NaN;
 	private Integer updateLocation = AppWidgetsColumns.UPDATE_LOCATION_FALSE;
-
 	private Button mMap;
 	private Button mSave;
 	private EditText mTitle;
@@ -202,9 +204,9 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		((RadioButton) findViewById(R.id.conf_current_and_refreshed)).setOnClickListener(this);
 		((RadioButton) findViewById(R.id.conf_manual)).setOnClickListener(this);
 		((RadioButton) findViewById(R.id.conf_current)).setOnClickListener(this);
-		
+
 		((RadioButton) findViewById(R.id.conf_current)).setSelected(true);
-		
+
 		mMap = (Button) findViewById(R.id.conf_map);
 		mSave = (Button) findViewById(R.id.conf_save);
 
@@ -229,12 +231,20 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		// Start listener to find current location
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		String provider = locationManager.getBestProvider(new Criteria(), true);
+
+		// check if network location provider is available
+		LocationProvider provider = locationManager.getProvider(LocationManager.NETWORK_PROVIDER);
 
 		if (provider != null) {
+
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10 * DateUtils.MINUTE_IN_MILLIS,
+					100, // 1km
+					locationListener);
+			
 			// Fire off geocoding request for last fix, but only if not
 			// restoring
-			mLastFix = locationManager.getLastKnownLocation(provider);
+			mLastFix = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
 			if (mLastFix != null && savedInstanceState == null) {
 				startGeocode(mLastFix);
 			}
@@ -242,12 +252,32 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		if (mLastFix == null) {
 			// No enabled providers found, so disable option
-			RadioButton radioCurrent = (RadioButton) findViewById(R.id.conf_current);
-			radioCurrent.setVisibility(View.GONE);
+			RadioButton radioCurrent;
+			radioCurrent = (RadioButton) findViewById(R.id.conf_current);
+			radioCurrent.setEnabled(false);
+			radioCurrent = (RadioButton) findViewById(R.id.conf_current_and_refreshed);
+			radioCurrent.setEnabled(false);
 
 			mTitle.setText(R.string.conf_nofix);
 		}
 	}
+
+	private final LocationListener locationListener = new LocationListener() {
+		public void onLocationChanged(Location location) {
+			mLastFix = location;
+
+			Log.d(TAG, "Location updated !!!!!!!!!!!!!! ("  + mLastFix.getLatitude() + " - " + mLastFix.getLongitude() + ")");
+		}
+
+		public void onProviderDisabled(String provider) {
+		}
+
+		public void onProviderEnabled(String provider) {
+		}
+
+		public void onStatusChanged(String provider, int status, Bundle extras) {
+		}
+	};
 
 	/**
 	 * Handle any new intents wrapping around from {@link SearchManager}.
@@ -323,7 +353,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			lang = mLang.getText().toString();
 			encoding = mEncoding.getText().toString();
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
-				
+
 			values.put(BaseColumns._ID, mAppWidgetId);
 			values.put(AppWidgetsColumns.TITLE, title);
 			values.put(AppWidgetsColumns.LAT, mLat);
@@ -343,18 +373,11 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			UpdateService.requestUpdate(new int[] { mAppWidgetId });
 			ComponentName updateService = startService(new Intent(this, UpdateService.class));
 
-			if (null == updateService){
-			    // something really wrong here
-			    Log.e(TAG, "Could not start location service");
-			   }
-//
-//			ComponentName locationService = startService(new Intent(this, LocationService.class));
-//
-//			if (null == locationService){
-//			    // something really wrong here
-//			    Log.e(TAG, "Could not start location service");
-//			   }
-			
+			if (null == updateService) {
+				// something really wrong here
+				Log.e(TAG, "Could not start location service");
+			}
+
 			setConfigureResult(Activity.RESULT_OK);
 			finish();
 
