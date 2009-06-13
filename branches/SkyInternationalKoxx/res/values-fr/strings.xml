@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2009 Jeff Sharkey, http://jsharkey.org/
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+  
+          http://www.apache.org/licenses/LICENSE-2.0
+  
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="temperature_f" translatable="false">"<xliff:g id="temperature" example="74">%s</xliff:g>\u00b0"</string>
+    <string name="temperature_c" translatable="false">"<xliff:g id="temperature" example="74">%s</xliff:g>C"</string>
+
+    <string name="detail_title">"<xliff:g id="location" example="Mountain View">%s</xliff:g> (cliquer pour demander une mise à jour)"</string>
+    <string name="detail_empty">Pas de détails de prévisions trouvés</string>
+
+    <string name="conf_location">"<xliff:g id="locality" example="Mountain View">%1$s</xliff:g>, <xliff:g id="admin" example="California">%2$s</xliff:g>"</string>
+
+    <string name="widget_loading">Erreur de chargement\u2026</string>
+    <string name="widget_error">Erreur</string>
+
+    <string name="conf_descrip">Choisir la localisation pour le widget que vous inserez:</string>
+    <string name="conf_current">Localisation courante (la localisation par réseau GSM doit être autorisés)</string>
+    <string name="conf_current_and_refreshed">Localisation courante et rafraichie en permanence (la localisation par réseau GSM doit être autorisés)</string>
+    <string name="conf_manual">Localisation manuelle</string>
+    <string name="conf_near">Entrer un titre pour le widget:</string>
+    <string name="conf_lang_choice">Choix de la langue (fr, en, en-GB for UK, es, fi ...), choisi automatiquement °C/°F :</string>
+	<string name="conf_encoding_choice">Entrer l'encodage de la langue (iso-8859-1 pour latin) :</string>
+	<string name="conf_update_freq_choice">Entrer la frequence des mises à jour (en heures, mettre 0 pour inhiber les mises à jours automatiques) :</string>
+    <string name="conf_determ">Recherche\u2026</string>
+    <string name="conf_nofix">Localisation impossible</string>
+    <string name="conf_error">Erreur dans le géocodage de la localisation</string>
+    <string name="conf_map">Vérifier sur le carte</string>
+    <string name="conf_save">Sauvegarder</string>
+
+    <string name="search_label">Recherche des prévisions</string>
+    <string name="search_hint">Nom de la ville ou ZIP</string>
+
+    <string name="menu_config">Configurer</string>
+    <string name="menu_rename">Renomer</string>
+    <string name="menu_refresh">Rafraichir</string>
+
+    <string name="title_details">Détails prévisions</string>
+    <string name="title_configure">Configurer le widget</string>
+    <string name="title_info">Prévivions</string>
+
+    <string name="label_med">Météo moyen</string>
+    <string name="label_tiny">Météo petit</string>
+    <string name="label_large">Météo large</string>
+
+    <string name="app_name">Météo widget</string>
+    <string name="app_descrip">Météo widget permet d'afficher les prévivions météo sur votre bureau en choisisant la fréquence des mises à jour et une localisation automatique</string>
+
+    <string name="info_inserting_title">Inserer les widgets</string>
+    <string name="info_inserting">Au lieu de \"lancer\" les widgets, vous devez les ajouter au bureau.  Pour inserer un widget, appuyez longtemps dans une zone vide de votre bureau et sélectionnez \"Widgets\", puis \"Météo\".\n\nTaper sur le widget pour voir les prévisions météo pour les prochains jours.  Chaque widget insérer peut etre mis à jour automatiquement.\n\nVous pouvez ajouter plusieurs widgets pour afficher la météo de plusieurs emplcaments.</string>
+    <string name="info_credits_title">Data and icon credits</string>
+    <string name="info_credits">These widgets were written as Android developer examples by Jeff Sharkey and Francois Deslandes and released under the Apache 2.0 license.  http://jsharkey.org\n\nForecast data is provided under a public domain license from the National Weather Service, a division NOAA.  http://weather.gov\n\nForecast icons provided under a public domain license through the Tango Desktop Project.  http://tango.freedesktop.org \n\nModified by Koxx to use Google Weather instead of weather.gov, for international version !</string>
+    <string name="info_done">Poursuivre</string>
+
+</resources>
