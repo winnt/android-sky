@@ -27,8 +27,8 @@
     <string name="widget_error">Forecast error</string>
 
     <string name="conf_descrip">Pick the location to use for the forecast widget you\'re inserting:</string>
-    <string name="conf_current">My current location</string>
-    <string name="conf_current_and_refreshed">My current and auto-refreshed location</string>
+    <string name="conf_current">My current location (network location should be enabled)</string>
+    <string name="conf_current_and_refreshed">My current and auto-refreshed location (network location should be enabled)</string>
     <string name="conf_manual">Manual search</string>
     <string name="conf_near">Enter a title for this widget:</string>
     <string name="conf_lang_choice">Enter a language choice (fr, en, en-GB for UK, es, fi ...), it will also configure °C/°F :</string>
