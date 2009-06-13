@@ -42,15 +42,16 @@ import android.widget.RemoteViews;
 public class MedAppWidget extends AppWidgetProvider {
 	private static final String TAG = "MedAppWidget";
 
-	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TITLE, AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.CURRENT_TEMP,};
+	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TITLE,
+			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.UPDATE_STATUS };
 
 	private static final int COL_TITLE = 0;
 	private static final int COL_TEMP_UNIT = 1;
 	private static final int COL_CURRENT_TEMP = 2;
+	private static final int COL_UPDATE_STATUS = 3;
 
 	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.CONDITIONS,
-			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL,
-			 };
+			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL, };
 
 	private static final int COL_CONDITIONS = 0;
 	private static final int COL_TEMP_HIGH = 1;
@@ -102,6 +103,7 @@ public class MedAppWidget extends AppWidgetProvider {
 
 		String temp_unit_str = "";
 		int current_temp = 0;
+		int update_status = AppWidgetsColumns.UPDATE_STATUS_FAILURE;
 
 		Cursor cursor = null;
 
@@ -115,6 +117,8 @@ public class MedAppWidget extends AppWidgetProvider {
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
 
 				current_temp = cursor.getInt(COL_CURRENT_TEMP);
+				
+				update_status = cursor.getInt(COL_UPDATE_STATUS);
 			}
 		} finally {
 			if (cursor != null) {
@@ -134,20 +138,27 @@ public class MedAppWidget extends AppWidgetProvider {
 				String icon_url = cursor.getString(COL_ICON_URL);
 
 				int iconResource = ForecastUtils.getIconForForecast(icon_url, daytime);
-				
+
 				int tempHigh = cursor.getInt(COL_TEMP_HIGH);
 				int tempLow = cursor.getInt(COL_TEMP_LOW);
+
+				// update status
+				if (update_status == AppWidgetsColumns.UPDATE_STATUS_FAILURE)
+					views.setTextViewText(R.id.update_status, "*");
+				else
+					views.setTextViewText(R.id.update_status, "-");
 
 				views.setTextViewText(R.id.conditions, conditions);
 				views.setImageViewResource(R.id.icon, iconResource);
 
-				views.setTextViewText(R.id.current_temp,  ((Integer) current_temp).toString() + temp_unit_str);
+				views.setTextViewText(R.id.current_temp, ((Integer) current_temp).toString() + temp_unit_str);
 
 				if (tempHigh == Integer.MIN_VALUE || tempLow == Integer.MIN_VALUE) {
 					views.setViewVisibility(R.id.high_and_low, View.GONE);
 				} else {
 					views.setViewVisibility(R.id.high_and_low, View.VISIBLE);
-					views.setTextViewText(R.id.high_and_low, ((Integer) tempHigh).toString() + "/" + ((Integer) tempLow).toString() + temp_unit_str);
+					views.setTextViewText(R.id.high_and_low, ((Integer) tempHigh).toString() + "/"
+							+ ((Integer) tempLow).toString() + temp_unit_str);
 				}
 
 				forecastFilled = true;
