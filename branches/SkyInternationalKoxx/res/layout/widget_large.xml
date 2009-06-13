@@ -23,7 +23,7 @@
 
     <TextView
         android:id="@+id/location"
-        android:layout_width="fill_parent" 
+        android:layout_width="wrap_content" 
         android:layout_height="wrap_content"
         android:includeFontPadding="false"
         android:singleLine="true"
@@ -31,13 +31,23 @@
         style="@style/Text.Location" 
         />
 
-     <TextView
+    <TextView
          android:id="@+id/current_temp"
          android:layout_width="wrap_content" 
          android:layout_height="wrap_content"
 		 android:layout_below="@id/location"
          android:includeFontPadding="false"
          android:text="10°C"
+         style="@style/Text.Conditions" />
+
+    <TextView
+         android:id="@+id/update_status"
+         android:layout_width="wrap_content" 
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_alignParentRight="true"
+         android:includeFontPadding="false"
+         android:text="*"
          style="@style/Text.Conditions" />
 
     <LinearLayout

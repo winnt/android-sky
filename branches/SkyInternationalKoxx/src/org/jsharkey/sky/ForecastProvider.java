@@ -84,6 +84,9 @@ public class ForecastProvider extends ContentProvider {
 		public static final int UPDATE_LOCATION_TRUE = 1;
 		public static final int UPDATE_LOCATION_FALSE = 0;
 
+		public static final String UPDATE_STATUS = "update_status";
+		public static final int UPDATE_STATUS_OK = 1;
+		public static final int UPDATE_STATUS_FAILURE = 0;
 	}
 
 	public static class AppWidgets implements BaseColumns, AppWidgetsColumns {
@@ -169,7 +172,7 @@ public class ForecastProvider extends ContentProvider {
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 		private static final String DATABASE_NAME = "forecasts.db";
 
-		private static final int DATABASE_VERSION = 8;
+		private static final int DATABASE_VERSION = 9;
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -181,8 +184,9 @@ public class ForecastProvider extends ContentProvider {
 					+ AppWidgetsColumns.TITLE + " TEXT," + AppWidgetsColumns.LAT + " REAL," + AppWidgetsColumns.LON
 					+ " REAL," + AppWidgetsColumns.LANG + " TEXT," + AppWidgetsColumns.ENCODING + " TEXT,"
 					+ AppWidgetsColumns.UPDATE_FREQ + " INTEGER," + AppWidgetsColumns.UPDATE_LOCATION + " INTEGER,"
-					+ AppWidgetsColumns.LAST_UPDATED + " INTEGER," + AppWidgetsColumns.TEMP_UNIT + " STRING,"
-					+ AppWidgetsColumns.CURRENT_TEMP + " INTEGER," + AppWidgetsColumns.CONFIGURED + " INTEGER);");
+					+ AppWidgetsColumns.UPDATE_STATUS + " INTEGER," + AppWidgetsColumns.LAST_UPDATED + " INTEGER,"
+					+ AppWidgetsColumns.TEMP_UNIT + " STRING," + AppWidgetsColumns.CURRENT_TEMP + " INTEGER,"
+					+ AppWidgetsColumns.CONFIGURED + " INTEGER);");
 
 			db.execSQL("CREATE TABLE " + TABLE_FORECASTS + " (" + BaseColumns._ID
 					+ " INTEGER PRIMARY KEY AUTOINCREMENT," + ForecastsColumns.APPWIDGET_ID + " INTEGER,"

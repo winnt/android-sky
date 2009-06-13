@@ -45,21 +45,20 @@ public class LargeAppWidget extends AppWidgetProvider {
 	private static final String TAG = "LargeAppWidget";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.TITLE,
-			AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.TEMP_UNIT, };
+			AppWidgetsColumns.CURRENT_TEMP, AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.UPDATE_STATUS };
 
 	private static final int COL_TITLE = 0;
 	private static final int COL_CURRENT_TEMP = 1;
 	private static final int COL_TEMP_UNIT = 2;
+	private static final int COL_UPDATE_STATUS = 3;
 
-	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.CONDITIONS,
-			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL,
-			ForecastsColumns.VALID_START };
+	private static final String[] PROJECTION_FORECASTS = new String[] { ForecastsColumns.TEMP_HIGH,
+			ForecastsColumns.TEMP_LOW, ForecastsColumns.ICON_URL, ForecastsColumns.VALID_START };
 
-	private static final int COL_CONDITIONS = 0;
-	private static final int COL_TEMP_HIGH = 1;
-	private static final int COL_TEMP_LOW = 2;
-	private static final int COL_ICON_URL = 3;
-	private static final int COL_VALID_START = 4;
+	private static final int COL_TEMP_HIGH = 0;
+	private static final int COL_TEMP_LOW = 1;
+	private static final int COL_ICON_URL = 2;
+	private static final int COL_VALID_START = 3;
 
 	/**
 	 * {@inheritDoc}
@@ -102,6 +101,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 		boolean forecastFilled = false;
 		String temp_unit_str = "";
 		int current_temp = 0;
+		int update_status = AppWidgetsColumns.UPDATE_STATUS_FAILURE;
 
 		ContentResolver resolver = context.getContentResolver();
 		Resources res = context.getResources();
@@ -115,6 +115,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 				String title = cursor.getString(COL_TITLE);
 				temp_unit_str = cursor.getString(COL_TEMP_UNIT);
 				current_temp = cursor.getInt(COL_CURRENT_TEMP);
+				update_status = cursor.getInt(COL_UPDATE_STATUS);
 
 				views.setTextViewText(R.id.location, title);
 			}
@@ -131,8 +132,6 @@ public class LargeAppWidget extends AppWidgetProvider {
 
 			if (cursor != null && cursor.moveToFirst()) {
 
-				String conditions = cursor.getString(COL_CONDITIONS);
-
 				String icon_url = "";
 				int iconResource = 0;
 				Time mTime = new Time();
@@ -140,9 +139,15 @@ public class LargeAppWidget extends AppWidgetProvider {
 				int tempHigh = 0;
 				int tempLow = 0;
 
+				// update status
+				if (update_status == AppWidgetsColumns.UPDATE_STATUS_FAILURE)
+					views.setTextViewText(R.id.update_status, "*");
+				else
+					views.setTextViewText(R.id.update_status, "-");
+
 				// current temp
-				views.setTextViewText(R.id.current_temp, ((Integer)current_temp).toString() + temp_unit_str);
-				
+				views.setTextViewText(R.id.current_temp, ((Integer) current_temp).toString() + temp_unit_str);
+
 				// day 1
 				icon_url = cursor.getString(COL_ICON_URL);
 				iconResource = ForecastUtils.getIconForForecast(icon_url, daytime);
