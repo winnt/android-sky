@@ -23,7 +23,7 @@
 
     <string name="conf_location">"<xliff:g id="locality" example="Mountain View">%1$s</xliff:g>, <xliff:g id="admin" example="California">%2$s</xliff:g>"</string>
 
-    <string name="widget_loading">Erreur de chargement\u2026</string>
+    <string name="widget_loading">Chargement en cours ...\u2026</string>
     <string name="widget_error">Erreur</string>
 
     <string name="conf_descrip">Choisir la localisation pour le widget que vous inserez:</string>
@@ -32,7 +32,7 @@
     <string name="conf_manual">Localisation manuelle</string>
     <string name="conf_near">Entrer un titre pour le widget:</string>
     <string name="conf_lang_choice">Choix de la langue (fr, en, en-GB for UK, es, fi ...), choisi automatiquement °C/°F :</string>
-	<string name="conf_encoding_choice">Entrer l'encodage de la langue (iso-8859-1 pour latin) :</string>
+	<string name="conf_encoding_choice">Entrer l encodage de la langue (iso-8859-1 pour latin) :</string>
 	<string name="conf_update_freq_choice">Entrer la frequence des mises à jour (en heures, mettre 0 pour inhiber les mises à jours automatiques) :</string>
     <string name="conf_determ">Recherche\u2026</string>
     <string name="conf_nofix">Localisation impossible</string>
@@ -49,7 +49,7 @@
 
     <string name="title_details">Détails prévisions</string>
     <string name="title_configure">Configurer le widget</string>
-    <string name="title_info">Prévivions</string>
+    <string name="title_info">Prévivions Météo</string>
 
     <string name="label_med">Météo moyen</string>
     <string name="label_tiny">Météo petit</string>
