@@ -143,7 +143,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 				if (update_status == AppWidgetsColumns.UPDATE_STATUS_FAILURE)
 					views.setTextViewText(R.id.update_status, "*");
 				else
-					views.setTextViewText(R.id.update_status, "-");
+					views.setTextViewText(R.id.update_status, "");
 
 				// current temp
 				views.setTextViewText(R.id.current_temp, ((Integer) current_temp).toString() + temp_unit_str);
