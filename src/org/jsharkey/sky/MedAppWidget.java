@@ -146,7 +146,7 @@ public class MedAppWidget extends AppWidgetProvider {
 				if (update_status == AppWidgetsColumns.UPDATE_STATUS_FAILURE)
 					views.setTextViewText(R.id.update_status, "*");
 				else
-					views.setTextViewText(R.id.update_status, "-");
+					views.setTextViewText(R.id.update_status, "");
 
 				views.setTextViewText(R.id.conditions, conditions);
 				views.setImageViewResource(R.id.icon, iconResource);
