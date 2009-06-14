@@ -21,8 +21,11 @@ import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
 import org.jsharkey.sky.ForecastProvider.Forecasts;
 import org.jsharkey.sky.ForecastProvider.ForecastsColumns;
 
+import android.app.Activity;
 import android.app.ListActivity;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -56,6 +59,7 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 	private static final String[] PROJECTION_APPWIDGET = { BaseColumns._ID, AppWidgetsColumns.TITLE,
 			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.SKIN, };
 
+	private static final int COL_ID = 0;
 	private static final int COL_TITLE = 1;
 	private static final int COL_TEMP_UNIT = 2;
 	private static final int COL_SKIN = 3;
@@ -156,6 +160,39 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 		if (url != null) {
 			Intent linkIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 			startActivity(linkIntent);
+
+		} else {
+
+			ContentResolver resolver = getContentResolver();
+			cursor = null;
+
+			try {
+				cursor = resolver.query(mData, PROJECTION_APPWIDGET, null, null, null);
+				if (cursor != null && cursor.moveToFirst()) {
+
+					DetailsActivity.this.setVisible(false);
+					DetailsActivity.this.finish();
+					
+					widget_id = Integer.parseInt(cursor.getString(0));
+
+					Uri appWidgetUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, widget_id);
+
+					// Connect click intent to launch details
+					Intent configureIntent = new Intent(DetailsActivity.this, ConfigureActivity.class);
+					configureIntent.setData(appWidgetUri);
+
+					startActivity(configureIntent);
+
+				}
+				
+				if (cursor != null) {
+					cursor.close();
+				}
+				
+			} catch (Exception e) {
+				Log.d(TAG, "not able to show configuration panel", e);
+			}
+
 		}
 	}
 

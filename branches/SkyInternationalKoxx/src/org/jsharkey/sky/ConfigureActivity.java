@@ -35,6 +35,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -65,6 +66,19 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 	public static final String TAG = "ConfigureActivity";
 
+	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.UPDATE_FREQ,
+			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION,
+			AppWidgetsColumns.UPDATE_STATUS, AppWidgetsColumns.SKIN, AppWidgetsColumns.LANG, AppWidgetsColumns.ENCODING };
+
+	private static final int COL_UPDATE_FREQ = 0;
+	private static final int COL_CONFIGURED = 1;
+	private static final int COL_LAST_UPDATED = 2;
+	private static final int COL_UPDATE_LOCATION = 3;
+	private static final int COL_UPDATE_STATUS = 4;
+	private static final int COL_SKIN = 5;
+	private static final int COL_LANG = 6;
+	private static final int COL_ENCODING = 7;
+
 	private String lang = "fr";
 	private String encoding = "ISO-8859-1";
 	private Integer updateFreq = 3;
@@ -94,6 +108,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private Location mLastFix;
 
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+
+	private boolean widgetReconfiguration = false;
 
 	/**
 	 * Spawn a reverse geocoding operation to find names for the given
@@ -199,6 +215,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		setContentView(R.layout.configure);
 
+		widgetReconfiguration = false;
+
 		// build skin list
 		skinList.add("-- default internal --");
 		final String skinsPath = Environment.getExternalStorageDirectory() + "/" + this.getPackageName() + "/skins/";
@@ -218,12 +236,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mSkinName = (EditText) findViewById(R.id.conf_skin);
 		mSkinSelectionBtn = (Button) findViewById(R.id.conf_select_skin);
 
-		// Picked save, so write values to backend
-
-		mLang.setText(lang);
-		mEncoding.setText(encoding);
-		mUpdateFreq.setText(((Integer) updateFreq).toString());
-
 		// set click listener
 		((RadioButton) findViewById(R.id.conf_current_and_refreshed)).setOnClickListener(this);
 		((RadioButton) findViewById(R.id.conf_manual)).setOnClickListener(this);
@@ -239,20 +251,54 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mSkinSelectionBtn.setOnClickListener(this);
 
 		// Read the appWidgetId to configure from the incoming intent
+
 		mAppWidgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-		setConfigureResult(Activity.RESULT_CANCELED);
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+
+			try {
+				mAppWidgetId = Integer.parseInt(getIntent().getData().getLastPathSegment());
+				widgetReconfiguration = true;
+			} catch (Exception e) {
+				Log.d(TAG, "impossible to get widget previous configuration");
+			}
+		} else {
+			setConfigureResult(Activity.RESULT_CANCELED);
 			finish();
 			return;
 		}
-
-		// TODO: handle editing an existing widget by reading values
 
 		// If restoring, read location from bundle
 		if (savedInstanceState != null) {
 			mLat = savedInstanceState.getDouble(AppWidgetsColumns.LAT);
 			mLon = savedInstanceState.getDouble(AppWidgetsColumns.LON);
 		}
+
+		// set configured values
+		if (widgetReconfiguration == true) {
+			ContentResolver resolver = getContentResolver();
+			Cursor cursor = null;
+			try {
+				cursor = resolver.query(getIntent().getData(), PROJECTION_APPWIDGETS, null, null, null);
+				if (cursor != null && cursor.moveToFirst()) {
+
+					updateFreq = cursor.getInt(COL_UPDATE_FREQ);
+					updateLocation = cursor.getInt(COL_UPDATE_LOCATION);
+					skinName = cursor.getString(COL_SKIN);
+					lang = cursor.getString(COL_LANG);
+					encoding = cursor.getString(COL_ENCODING);
+
+				}
+			} finally {
+				if (cursor != null) {
+					cursor.close();
+				}
+			}
+		}
+
+		mLang.setText(lang);
+		mEncoding.setText(encoding);
+		mUpdateFreq.setText(((Integer) updateFreq).toString());
+		mSkinName.setText(skinName);
 
 		// Start listener to find current location
 		LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -375,7 +421,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			break;
 		}
 		case R.id.conf_select_skin: {
-			
+
 			// show skin list
 			String[] skinListTab = (String[]) skinList.toArray(new String[skinList.size()]);
 
@@ -394,7 +440,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		}
 		case R.id.conf_save: {
 			// Picked save, so write values to backend
-			ContentValues values = new ContentValues();
 			String title = mTitle.getText().toString();
 			lang = mLang.getText().toString();
 			encoding = mEncoding.getText().toString();
@@ -418,6 +463,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 				}
 			}
 
+			ContentValues values = new ContentValues();
+
 			values.put(BaseColumns._ID, mAppWidgetId);
 			values.put(AppWidgetsColumns.TITLE, title);
 			values.put(AppWidgetsColumns.LAT, mLat);
@@ -430,9 +477,13 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			values.put(AppWidgetsColumns.LAST_UPDATED, -1);
 			values.put(AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.CONFIGURED_TRUE);
 
-			// TODO: update instead of insert if editing an existing widget
+			// update instead of insert if editing an existing widget
 			ContentResolver resolver = getContentResolver();
-			resolver.insert(AppWidgets.CONTENT_URI, values);
+			if (!widgetReconfiguration)
+				resolver.insert(AppWidgets.CONTENT_URI, values);
+			else
+				//Uri.withAppendedPath(AppWidgets.CONTENT_URI
+				resolver.update(getIntent().getData(), values, null, null);
 
 			// Trigger pushing a widget update to surface
 			UpdateService.requestUpdate(new int[] { mAppWidgetId });
