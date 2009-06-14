@@ -134,14 +134,29 @@
             android:text="@string/conf_skin_choice"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
-        <EditText
-            android:id="@+id/conf_skin"
-            android:layout_width="fill_parent" 
+        <LinearLayout
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
-            android:freezesText="true" />
-            
+            android:orientation="horizontal">
+
+	        <Button
+	            android:id="@+id/conf_select_skin"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:text="@string/conf_skin_select_btn" />
+	
+	        <EditText
+	            android:id="@+id/conf_skin"
+	            android:layout_width="fill_parent" 
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:layout_marginLeft="20dip"
+	            android:layout_marginRight="20dip"
+	            android:freezesText="true" />
+	            
+		</LinearLayout>
+			            
         <View
             android:layout_width="fill_parent"
             android:layout_height="0dip"

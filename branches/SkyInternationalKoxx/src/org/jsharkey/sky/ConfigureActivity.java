@@ -16,13 +16,16 @@
 
 package org.jsharkey.sky;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jsharkey.sky.ForecastProvider.AppWidgets;
 import org.jsharkey.sky.ForecastProvider.AppWidgetsColumns;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
@@ -30,6 +33,7 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
@@ -40,6 +44,7 @@ import android.location.LocationProvider;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -50,7 +55,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-
 
 /**
  * Activity to configure forecast widgets. Usually launched automatically by an
@@ -74,7 +78,11 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private EditText mEncoding;
 	private EditText mUpdateFreq;
 	private EditText mSkinName;
-	
+	private Button mSkinSelectionBtn;
+
+	// private List<String> skinList[] = new List<String>[];
+	private ArrayList<String> skinList = new ArrayList<String>();
+
 	/**
 	 * Default zoom level when showing map to verify location.
 	 */
@@ -191,12 +199,24 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		setContentView(R.layout.configure);
 
+		// build skin list
+		skinList.add("-- default internal --");
+		final String skinsPath = Environment.getExternalStorageDirectory() + "/" + this.getPackageName() + "/skins/";
+		File folder = new File(skinsPath);
+		if (folder.exists()) {
+			File[] folderFileList = folder.listFiles();
+			for (int i = 0; i < folderFileList.length; i++)
+				if (folderFileList[i].isDirectory())
+					skinList.add(folderFileList[i].getName());
+		}
+
 		mTitle = (EditText) findViewById(R.id.conf_title);
 
 		mLang = (EditText) findViewById(R.id.conf_lang);
 		mEncoding = (EditText) findViewById(R.id.conf_encoding);
 		mUpdateFreq = (EditText) findViewById(R.id.conf_update_freq);
 		mSkinName = (EditText) findViewById(R.id.conf_skin);
+		mSkinSelectionBtn = (Button) findViewById(R.id.conf_select_skin);
 
 		// Picked save, so write values to backend
 
@@ -204,6 +224,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mEncoding.setText(encoding);
 		mUpdateFreq.setText(((Integer) updateFreq).toString());
 
+		// set click listener
 		((RadioButton) findViewById(R.id.conf_current_and_refreshed)).setOnClickListener(this);
 		((RadioButton) findViewById(R.id.conf_manual)).setOnClickListener(this);
 		((RadioButton) findViewById(R.id.conf_current)).setOnClickListener(this);
@@ -215,6 +236,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 
 		mMap.setOnClickListener(this);
 		mSave.setOnClickListener(this);
+		mSkinSelectionBtn.setOnClickListener(this);
 
 		// Read the appWidgetId to configure from the incoming intent
 		mAppWidgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
@@ -243,7 +265,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10 * DateUtils.MINUTE_IN_MILLIS,
 					100, // 1km
 					locationListener);
-			
+
 			// Fire off geocoding request for last fix, but only if not
 			// restoring
 			mLastFix = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -269,7 +291,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		public void onLocationChanged(Location location) {
 			mLastFix = location;
 
-			Log.d(TAG, "Location updated !!!!!!!!!!!!!! ("  + mLastFix.getLatitude() + " - " + mLastFix.getLongitude() + ")");
+			Log.d(TAG, "Location updated !!!!!!!!!!!!!! (" + mLastFix.getLatitude() + " - " + mLastFix.getLongitude()
+					+ ")");
 		}
 
 		public void onProviderDisabled(String provider) {
@@ -281,6 +304,8 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 		}
 	};
+
+	private String skinName;
 
 	/**
 	 * Handle any new intents wrapping around from {@link SearchManager}.
@@ -349,6 +374,24 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			startActivity(mapIntent);
 			break;
 		}
+		case R.id.conf_select_skin: {
+			
+			// show skin list
+			String[] skinListTab = (String[]) skinList.toArray(new String[skinList.size()]);
+
+			new AlertDialog.Builder(ConfigureActivity.this).setTitle(
+					getResources().getString(R.string.conf_skin_select_btn)).setItems(skinListTab,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int whichSkin) {
+							// if not default skin, set skin name
+							if (whichSkin > 0) {
+								skinName = skinList.get(whichSkin);
+								mSkinName.setText(skinName);
+							}
+						}
+					}).show();
+			break;
+		}
 		case R.id.conf_save: {
 			// Picked save, so write values to backend
 			ContentValues values = new ContentValues();
@@ -356,8 +399,25 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			lang = mLang.getText().toString();
 			encoding = mEncoding.getText().toString();
 			updateFreq = Integer.parseInt(mUpdateFreq.getText().toString());
-			String skinName = mSkinName.getText().toString();
-			
+			skinName = mSkinName.getText().toString();
+
+			// check skin validity
+			final String skinsPath = Environment.getExternalStorageDirectory() + "/" + this.getPackageName()
+					+ "/skins/";
+			if (!skinName.equals("")) {
+				File f = new File(skinsPath + skinName, ".");
+				if (!f.exists()) {
+					new AlertDialog.Builder(ConfigureActivity.this).setTitle(
+							getResources().getString(R.string.conf_skin_check_title)).setMessage(
+							getResources().getString(R.string.conf_skin_check_message)).setNeutralButton("Ok",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int whichButton) {
+								}
+							}).show();
+					break;
+				}
+			}
+
 			values.put(BaseColumns._ID, mAppWidgetId);
 			values.put(AppWidgetsColumns.TITLE, title);
 			values.put(AppWidgetsColumns.LAT, mLat);
