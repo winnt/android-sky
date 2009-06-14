@@ -20,6 +20,9 @@
 
     <string name="detail_title">"<xliff:g id="location" example="Mountain View">%s</xliff:g> (click to request update)"</string>
     <string name="detail_empty">No forecast details found</string>
+    <string name="detail_txt_update_ok">done</string>
+    <string name="detail_txt_update_failed">failed</string>
+    <string name="detail_txt_update">Last update status : %s\nCurrent skin : %s\nClick here to reconfigure widget</string>
 
     <string name="conf_location">"<xliff:g id="locality" example="Mountain View">%1$s</xliff:g>, <xliff:g id="admin" example="California">%2$s</xliff:g>"</string>
 
@@ -43,7 +46,9 @@
     <string name="conf_error">Error geocoding location</string>
     <string name="conf_map">Verify on map</string>
     <string name="conf_save">Save</string>
-
+    <string name="conf_geocoder_pb_title">Geoceoder problem</string>
+    <string name="conf_geocoder_pb_message">Communication problem with Google geocoder server. Retry in few minutes.</string>
+    
     <string name="search_label">Forecast location</string>
     <string name="search_hint">Location name or zip</string>
 

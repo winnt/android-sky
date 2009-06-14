@@ -56,6 +56,7 @@ public class ForecastProvider extends ContentProvider {
 		 * as read from {@link System#currentTimeMillis()}.
 		 */
 		public static final String LAST_UPDATED = "lastUpdated";
+		public static final String NEXT_UPDATE = "nextUpdate";
 
 		/**
 		 * Flag specifying if this widget has been configured yet, used to skip
@@ -175,7 +176,7 @@ public class ForecastProvider extends ContentProvider {
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 		private static final String DATABASE_NAME = "forecasts.db";
 
-		private static final int DATABASE_VERSION = 13;
+		private static final int DATABASE_VERSION = 14;
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -190,8 +191,9 @@ public class ForecastProvider extends ContentProvider {
 					+ " REAL," + AppWidgetsColumns.LANG + " TEXT," + AppWidgetsColumns.ENCODING + " TEXT,"
 					+ AppWidgetsColumns.UPDATE_FREQ + " INTEGER," + AppWidgetsColumns.UPDATE_LOCATION + " INTEGER,"
 					+ AppWidgetsColumns.UPDATE_STATUS + " INTEGER," + AppWidgetsColumns.LAST_UPDATED + " INTEGER,"
-					+ AppWidgetsColumns.TEMP_UNIT + " STRING," + AppWidgetsColumns.CURRENT_TEMP + " INTEGER,"
-					+ AppWidgetsColumns.SKIN + " STRING," + AppWidgetsColumns.CONFIGURED + " INTEGER);");
+					+ AppWidgetsColumns.NEXT_UPDATE + " INTEGER," + AppWidgetsColumns.TEMP_UNIT + " STRING,"
+					+ AppWidgetsColumns.CURRENT_TEMP + " INTEGER," + AppWidgetsColumns.SKIN + " STRING,"
+					+ AppWidgetsColumns.CONFIGURED + " INTEGER);");
 
 			db.execSQL("CREATE TABLE " + TABLE_FORECASTS + " (" + BaseColumns._ID
 					+ " INTEGER PRIMARY KEY AUTOINCREMENT," + ForecastsColumns.APPWIDGET_ID + " INTEGER,"

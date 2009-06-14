@@ -63,14 +63,15 @@ public class UpdateService extends Service implements Runnable {
 	private static final String TAG = "UpdateService";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.UPDATE_FREQ,
-			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION,
-			AppWidgetsColumns.UPDATE_STATUS, };
+			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.NEXT_UPDATE,
+			AppWidgetsColumns.UPDATE_LOCATION, AppWidgetsColumns.UPDATE_STATUS, };
 
 	private static final int COL_UPDATE_FREQ = 0;
 	private static final int COL_CONFIGURED = 1;
 	private static final int COL_LAST_UPDATED = 2;
-	private static final int COL_UPDATE_LOCATION = 3;
-	private static final int COL_UPDATE_STATUS = 4;
+	private static final int COL_NEXT_UPDATE = 3;
+	private static final int COL_UPDATE_LOCATION = 4;
+	private static final int COL_UPDATE_STATUS = 5;
 
 	/**
 	 * Interval to wait between background widget updates. Every 6 hours is
@@ -184,7 +185,7 @@ public class UpdateService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		
+
 		// If requested, trigger update of all widgets
 		if (ACTION_UPDATE_ALL.equals(intent.getAction())) {
 			Log.d(TAG, "Requested UPDATE_ALL action");
@@ -291,12 +292,14 @@ public class UpdateService extends Service implements Runnable {
 							if (mLastFix != null) {
 
 								GeocodeQuery geoResult = null;
-//
-//								try {
-//									new GeocoderTask().execute(new GeocodeQuery(mLastFix));
-//								} catch (Exception e) {
-//									Log.d(TAG, "not able to launch geocoder task");
-//								}
+								//
+								// try {
+								// new GeocoderTask().execute(new
+								// GeocodeQuery(mLastFix));
+								// } catch (Exception e) {
+								// Log.d(TAG,
+								// "not able to launch geocoder task");
+								// }
 
 								try {
 									geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
@@ -401,6 +404,12 @@ public class UpdateService extends Service implements Runnable {
 
 			long deltaMinutes = (nextUpdate - nowMillis) / DateUtils.MINUTE_IN_MILLIS;
 			Log.d(TAG, "Requesting next update at " + nextUpdate + ", in " + deltaMinutes + " min");
+
+//			// save next update value
+//			ContentValues values = new ContentValues();
+//			values.put(AppWidgetsColumns.COL_NEXT_UPDATE, nextUpdate);
+//			ContentResolver resolver2 = getContentResolver();
+//			resolver2.update(appWidgetUri, values, null, null);
 
 			Intent updateIntent = new Intent(ACTION_UPDATE_ALL);
 			updateIntent.setClass(this, UpdateService.class);

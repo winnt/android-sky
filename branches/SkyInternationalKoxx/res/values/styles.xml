@@ -96,6 +96,12 @@
         <item name="android:cacheColorHint">@color/white</item>
     </style>
 
+    <style name="DetailsInfos" parent="@android:style/Widget.ListView.White">
+        <item name="android:background">@color/white</item>
+        <item name="android:cacheColorHint">@color/white</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
     <style name="DetailsEmpty">
         <item name="android:padding">20dip</item>
         <item name="android:background">@color/white</item>

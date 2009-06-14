@@ -24,6 +24,7 @@ import org.jsharkey.sky.ForecastProvider.ForecastsColumns;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.app.PendingIntent;
+import android.appwidget.AppWidgetProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -40,6 +41,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ResourceCursorAdapter;
@@ -57,12 +59,15 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 	private ListAdapter mAdapter;
 
 	private static final String[] PROJECTION_APPWIDGET = { BaseColumns._ID, AppWidgetsColumns.TITLE,
-			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.SKIN, };
+			AppWidgetsColumns.TEMP_UNIT, AppWidgetsColumns.SKIN, AppWidgetsColumns.NEXT_UPDATE,
+			AppWidgetsColumns.UPDATE_STATUS };
 
 	private static final int COL_ID = 0;
 	private static final int COL_TITLE = 1;
 	private static final int COL_TEMP_UNIT = 2;
 	private static final int COL_SKIN = 3;
+	private static final int COL_NEXT_UPDATE = 4;
+	private static final int COL_UPDATE_STATUS = 5;
 
 	private static final String[] PROJECTION_FORECAST = new String[] { BaseColumns._ID, ForecastsColumns.VALID_START,
 			ForecastsColumns.TEMP_HIGH, ForecastsColumns.TEMP_LOW, ForecastsColumns.CONDITIONS, ForecastsColumns.URL,
@@ -133,6 +138,26 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 					useSkin = false;
 				else
 					useSkin = true;
+
+				int updateStatus = cursor.getInt(COL_UPDATE_STATUS);
+				String updateStatusStr;
+				if (updateStatus == AppWidgetsColumns.UPDATE_STATUS_OK)
+					updateStatusStr = getResources().getText(R.string.detail_txt_update_ok).toString();
+				else
+					updateStatusStr = getResources().getText(R.string.detail_txt_update_failed).toString();
+
+				// long nextUpdate = cursor.getLong(COL_NEXT_UPDATE);
+				// long nowMillis = System.currentTimeMillis();
+				// long deltaMinutes = (nextUpdate - nowMillis) /
+				// DateUtils.MINUTE_IN_MILLIS;
+				long deltaMinutes = 10;
+
+				// Next update in " + deltaMinutes+ " minutes\n
+
+				TextView infos = (TextView) findViewById(R.id.details_info);
+				infos.setText(getString(R.string.detail_txt_update, updateStatusStr, skinName));
+				infos.setOnClickListener(this);
+
 			}
 		} finally {
 			if (cursor != null) {
@@ -172,7 +197,7 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 
 					DetailsActivity.this.setVisible(false);
 					DetailsActivity.this.finish();
-					
+
 					widget_id = Integer.parseInt(cursor.getString(0));
 
 					Uri appWidgetUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, widget_id);
@@ -184,11 +209,11 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 					startActivity(configureIntent);
 
 				}
-				
+
 				if (cursor != null) {
 					cursor.close();
 				}
-				
+
 			} catch (Exception e) {
 				Log.d(TAG, "not able to show configuration panel", e);
 			}
@@ -254,12 +279,52 @@ public class DetailsActivity extends ListActivity implements View.OnClickListene
 
 	@Override
 	public void onClick(View v) {
+		switch (v.getId()) {
+		case android.R.id.title: {
+			// Request update for these widgets and launch updater service
+			UpdateService.requestUpdate(new int[] { widget_id });
+			startService(new Intent(this, UpdateService.class));
 
-		// Request update for these widgets and launch updater service
-		UpdateService.requestUpdate(new int[] { widget_id });
-		startService(new Intent(this, UpdateService.class));
+			finish();
+			break;
+		}
 
-		finish();
+		case R.id.details_info: {
 
+			// reconfiguration
+			Cursor cursor = null;
+			ContentResolver resolver = getContentResolver();
+
+			try {
+				cursor = resolver.query(mData, PROJECTION_APPWIDGET, null, null, null);
+				if (cursor != null && cursor.moveToFirst()) {
+
+					DetailsActivity.this.setVisible(false);
+					DetailsActivity.this.finish();
+
+					widget_id = Integer.parseInt(cursor.getString(0));
+
+					Uri appWidgetUri = ContentUris.withAppendedId(AppWidgets.CONTENT_URI, widget_id);
+
+					// Connect click intent to launch details
+					Intent configureIntent = new Intent(DetailsActivity.this, ConfigureActivity.class);
+					configureIntent.setData(appWidgetUri);
+
+					startActivity(configureIntent);
+
+				}
+
+				if (cursor != null) {
+					cursor.close();
+				}
+
+			} catch (Exception e) {
+				Log.d(TAG, "not able to show configuration panel", e);
+			}
+
+			break;
+		}
+
+		}
 	}
 }

@@ -67,17 +67,14 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	public static final String TAG = "ConfigureActivity";
 
 	private static final String[] PROJECTION_APPWIDGETS = new String[] { AppWidgetsColumns.UPDATE_FREQ,
-			AppWidgetsColumns.CONFIGURED, AppWidgetsColumns.LAST_UPDATED, AppWidgetsColumns.UPDATE_LOCATION,
-			AppWidgetsColumns.UPDATE_STATUS, AppWidgetsColumns.SKIN, AppWidgetsColumns.LANG, AppWidgetsColumns.ENCODING };
+			AppWidgetsColumns.UPDATE_LOCATION, AppWidgetsColumns.SKIN, AppWidgetsColumns.LANG,
+			AppWidgetsColumns.ENCODING };
 
 	private static final int COL_UPDATE_FREQ = 0;
-	private static final int COL_CONFIGURED = 1;
-	private static final int COL_LAST_UPDATED = 2;
-	private static final int COL_UPDATE_LOCATION = 3;
-	private static final int COL_UPDATE_STATUS = 4;
-	private static final int COL_SKIN = 5;
-	private static final int COL_LANG = 6;
-	private static final int COL_ENCODING = 7;
+	private static final int COL_UPDATE_LOCATION = 1;
+	private static final int COL_SKIN = 2;
+	private static final int COL_LANG = 3;
+	private static final int COL_ENCODING = 4;
 
 	private String lang = "fr";
 	private String encoding = "ISO-8859-1";
@@ -94,7 +91,9 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 	private EditText mSkinName;
 	private Button mSkinSelectionBtn;
 
-	// private List<String> skinList[] = new List<String>[];
+	/**
+	 * Skin list from built from sdcard skins availables
+	 */
 	private ArrayList<String> skinList = new ArrayList<String>();
 
 	/**
@@ -185,6 +184,14 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 				mLat = Double.NaN;
 				mLon = Double.NaN;
 				setActionEnabled(false);
+				
+				new AlertDialog.Builder(ConfigureActivity.this).setTitle(
+						getResources().getString(R.string.conf_geocoder_pb_title)).setMessage(
+						getResources().getString(R.string.conf_geocoder_pb_message)).setNeutralButton("Ok",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int whichButton) {
+							}
+						}).show();
 			} else {
 				mTitle.setText(found.name);
 				mLat = found.lat;
@@ -201,10 +208,6 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mTitle.setEnabled(enabled);
 		mMap.setEnabled(enabled);
 		mSave.setEnabled(enabled);
-		mLang.setEnabled(enabled);
-		mEncoding.setEnabled(enabled);
-		mUpdateFreq.setEnabled(enabled);
-		mSkinName.setEnabled(enabled);
 	}
 
 	@Override
@@ -251,18 +254,24 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 		mSkinSelectionBtn.setOnClickListener(this);
 
 		// Read the appWidgetId to configure from the incoming intent
-
 		mAppWidgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		setConfigureResult(Activity.RESULT_CANCELED);
+
+		// if invalid, check if not an existing widget
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
 
 			try {
 				mAppWidgetId = Integer.parseInt(getIntent().getData().getLastPathSegment());
 				widgetReconfiguration = true;
+				setConfigureResult(Activity.RESULT_OK);
+
 			} catch (Exception e) {
 				Log.d(TAG, "impossible to get widget previous configuration");
 			}
-		} else {
-			setConfigureResult(Activity.RESULT_CANCELED);
+		}
+
+		// if still invalid, end ...
+		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
 			finish();
 			return;
 		}
@@ -433,6 +442,9 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 							if (whichSkin > 0) {
 								skinName = skinList.get(whichSkin);
 								mSkinName.setText(skinName);
+							} else {
+								skinName = "";
+								mSkinName.setText(skinName);
 							}
 						}
 					}).show();
@@ -482,7 +494,7 @@ public class ConfigureActivity extends Activity implements View.OnClickListener,
 			if (!widgetReconfiguration)
 				resolver.insert(AppWidgets.CONTENT_URI, values);
 			else
-				//Uri.withAppendedPath(AppWidgets.CONTENT_URI
+				// Uri.withAppendedPath(AppWidgets.CONTENT_URI
 				resolver.update(getIntent().getData(), values, null, null);
 
 			// Trigger pushing a widget update to surface
