@@ -36,9 +36,10 @@
         android:layout_alignRight="@id/icon"
         android:orientation="horizontal"
         android:duplicateParentState="true"
-        style="@style/WidgetBackground">
-
-        <TextView
+        style="@style/WidgetBackground"
+        >
+        
+    	<TextView
             android:id="@+id/current_temp"
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content"

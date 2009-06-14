@@ -38,13 +38,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
@@ -83,7 +83,7 @@ public class UpdateService extends Service implements Runnable {
 	private LocationManager lm;
 	private LocationListener myLocationListener;
 
-	private static final double TEST_SPEED_MULTIPLIER =  1.0;
+	private static final double TEST_SPEED_MULTIPLIER = 1.0;
 
 	/**
 	 * If we calculated an update too quickly in the future, wait this interval
@@ -184,7 +184,7 @@ public class UpdateService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-
+		
 		// If requested, trigger update of all widgets
 		if (ACTION_UPDATE_ALL.equals(intent.getAction())) {
 			Log.d(TAG, "Requested UPDATE_ALL action");
@@ -289,7 +289,21 @@ public class UpdateService extends Service implements Runnable {
 							Location mLastFix = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
 							if (mLastFix != null) {
-								GeocodeQuery geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
+
+								GeocodeQuery geoResult = null;
+//
+//								try {
+//									new GeocoderTask().execute(new GeocodeQuery(mLastFix));
+//								} catch (Exception e) {
+//									Log.d(TAG, "not able to launch geocoder task");
+//								}
+
+								try {
+									geoResult = GeocoderGetData(new GeocodeQuery(mLastFix));
+								} catch (Exception e) {
+									Log.d(TAG, "not able to refresh location - geocoder problem");
+									updateStatusOk = false;
+								}
 
 								if (geoResult != null) {
 									ContentValues values = new ContentValues();
@@ -302,16 +316,14 @@ public class UpdateService extends Service implements Runnable {
 									resolver2.update(appWidgetUri, values, null, null);
 
 								} else {
-									Log.d(TAG, "not able to refresh location");
+									Log.d(TAG, "not able to refresh location - geocoder null result");
 									updateStatusOk = false;
 								}
 							} else {
-								Log.d(TAG, "not able to refresh location");
+								Log.d(TAG, "not able to refresh location - not able to get position");
 								updateStatusOk = false;
 							}
-						}
-						else
-						{
+						} else {
 							Log.d(TAG, "not able to refresh location - provider not available");
 							updateStatusOk = false;
 						}
@@ -343,7 +355,7 @@ public class UpdateService extends Service implements Runnable {
 			// set general update status to false to request a faster update
 			if (updateStatusOk = false)
 				generalUpdateStatusOk = false;
-			
+
 			// Process this update through the correct provider
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
 			if (info != null) {
@@ -371,13 +383,13 @@ public class UpdateService extends Service implements Runnable {
 		if (update_interval > 0) {
 
 			Time time = new Time();
-			
+
 			// if an update fail, request a faster update
 			if (generalUpdateStatusOk)
 				time.set(System.currentTimeMillis() + update_interval);
 			else
 				time.set(System.currentTimeMillis() + (update_interval / 5));
-				
+
 			long nextUpdate = time.toMillis(false);
 			long nowMillis = System.currentTimeMillis();
 
@@ -416,7 +428,7 @@ public class UpdateService extends Service implements Runnable {
 		GeocodeQuery result = null;
 		int retries = 0;
 
-		while ((result == null) && (retries < 3)) {
+		while ((result == null) && (retries < 1)) {
 			try {
 				if (!TextUtils.isEmpty(query.name)) {
 					// Forward geocode using query
@@ -444,4 +456,78 @@ public class UpdateService extends Service implements Runnable {
 
 		return result;
 	}
+
+	/**
+	 * Background task to perform a geocoding operation. Will disable GUI
+	 * actions while running in the background, and then update GUI with results
+	 * when found.
+	 * <p>
+	 * If no reverse geocoding results found, will still return original
+	 * coordinates but will leave suggested title empty.
+	 */
+	private class GeocoderTask extends AsyncTask<GeocodeQuery, Void, GeocodeQuery> {
+		private Geocoder mGeocoder;
+
+		private GeocoderTask() {
+			mGeocoder = new Geocoder(UpdateService.this);
+		}
+
+		private GeocoderTask(Context ctx) {
+			mGeocoder = new Geocoder(ctx);
+		}
+
+		protected void onPreExecute() {
+			// setActionEnabled(false);
+		}
+
+		protected GeocodeQuery doInBackground(GeocodeQuery... args) {
+			GeocodeQuery query = args[0];
+			GeocodeQuery result = null;
+
+			try {
+				if (!TextUtils.isEmpty(query.name)) {
+					// Forward geocode using query
+					List<Address> results = mGeocoder.getFromLocationName(query.name, 1);
+					if (results.size() > 0) {
+						result = new GeocodeQuery(results.get(0));
+					}
+				} else if (!Double.isNaN(query.lat) && !Double.isNaN(query.lon)) {
+					// Reverse geocode using location
+					List<Address> results = mGeocoder.getFromLocation(query.lat, query.lon, 1);
+					if (results.size() > 0) {
+						result = new GeocodeQuery(results.get(0));
+						result.lat = query.lat;
+						result.lon = query.lon;
+					} else {
+						result = query;
+					}
+				}
+			} catch (IOException e) {
+				Log.e(TAG, "Problem using geocoder", e);
+			}
+
+			return result;
+		}
+
+		protected void onPostExecute(GeocodeQuery found) {
+			// setProgressBarIndeterminateVisibility(false);
+			//
+			// // Update GUI with resolved string
+			if (found == null) {
+				// mLat = Double.NaN;
+				// mLon = Double.NaN;
+				// setActionEnabled(false);
+
+				Log.d(TAG, "geocoder task FAILURE !!!");
+			} else {
+				// mTitle.setText(found.name);
+				// mLat = found.lat;
+				// mLon = found.lon;
+				// setActionEnabled(true);
+				Log.d(TAG, "geocoder task OK !!!");
+
+			}
+		}
+	}
+
 }

@@ -32,7 +32,9 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Environment;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
@@ -131,6 +133,10 @@ public class LargeAppWidget extends AppWidgetProvider {
 					useSkin = true;
 				
 				views.setTextViewText(R.id.location, title);
+
+//				views.setImageViewBitmap(R.id.widget, new BitmapDrawable(Environment.getExternalStorageDirectory() + "/"
+//						+ context.getPackageName() + "/skins/" + skinName + "/widget_bg_normal.9.png").getBitmap());
+				
 			}
 		} finally {
 			if (cursor != null) {
@@ -176,7 +182,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 2
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, true, useSkin, skinName);
 				views.setImageViewBitmap(R.id.icon2, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
@@ -189,7 +195,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 3
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, true, useSkin, skinName);
 				views.setImageViewBitmap(R.id.icon3, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
@@ -202,7 +208,7 @@ public class LargeAppWidget extends AppWidgetProvider {
 				// day 4
 				cursor.moveToNext();
 				icon_url = cursor.getString(COL_ICON_URL);
-				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, daytime, useSkin, skinName);
+				iconResource = ForecastUtils.getIconBitmapForForecast(context, icon_url, true, useSkin, skinName);
 				views.setImageViewBitmap(R.id.icon4, iconResource);
 				mTime.set(cursor.getLong(COL_VALID_START));
 				dayOfWeek = DateUtils.getDayOfWeekString(mTime.weekDay + 1, DateUtils.LENGTH_MEDIUM).toUpperCase();
