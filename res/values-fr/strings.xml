@@ -22,7 +22,7 @@
     <string name="detail_empty">Pas de détails de prévisions trouvés</string>
     <string name="detail_txt_update_ok">réussie</string>
     <string name="detail_txt_update_failed">échec</string>
-    <string name="detail_txt_update">Etat dernière mise à jour : %s\nSkin courant : %s\nCliquer ici pour reconfigurer le widget</string>
+    <string name="detail_txt_update">Etat dernière mise à jour : %s\nSkin courant : %s\nCliquer ici pour reconfigurer le widget\n\nPenser à faire un don PayPal a koxx3@free.fr pour le maintenir gratuit, merci !</string>
 
     <string name="conf_location">"<xliff:g id="locality" example="Mountain View">%1$s</xliff:g>, <xliff:g id="admin" example="California">%2$s</xliff:g>"</string>
 
@@ -70,7 +70,7 @@
     <string name="info_inserting_title">Inserer les widgets</string>
     <string name="info_inserting">Au lieu de \"lancer\" les widgets, vous devez les ajouter au bureau.  Pour inserer un widget, appuyez longtemps dans une zone vide de votre bureau et sélectionnez \"Widgets\", puis \"Météo\".\n\nTaper sur le widget pour voir les prévisions météo pour les prochains jours.  Chaque widget insérer peut etre mis à jour automatiquement.\n\nVous pouvez ajouter plusieurs widgets pour afficher la météo de plusieurs emplcaments.</string>
     <string name="info_skins_title">Changing skin</string>
-    <string name="info_skins">To change skin, you have to download skins ressource file from this website : http://forum.xda-developers.com/showthread.php?p=3954429, and uncompress this file to sdcard root. To set the skin, when you configure the panel, you have to enter the skin directory name (such as \"default\" or \"htc\" or \"lavana\"). Skins can be easily created on sdcard, you just have to create PNG files named as PNG files available in \"default\" skin folder (size 64x64). To contribute, please post your skin at XDA.</string>
+    <string name="info_skins">To change skin, you have to download skins ressource file from this website : http://forum.xda-developers.com/showthread.php?p=3954429, and uncompress this file to sdcard root. To set the skin, use widget configuration panel. To contribute, please post your skin at XDA.</string>
     <string name="info_credits_title">Data and icon credits</string>
     <string name="info_credits">These widgets were written as Android developer examples by Jeff Sharkey and Francois Deslandes and released under the Apache 2.0 license.  http://jsharkey.org\n\nForecast data is provided under a public domain license from the National Weather Service, a division NOAA.  http://weather.gov\n\nForecast icons provided under a public domain license through the Tango Desktop Project.  http://tango.freedesktop.org \n\nModified by Koxx to use Google Weather instead of weather.gov, for international version !</string>
     <string name="info_done">Poursuivre</string>
