@@ -69,6 +69,8 @@
 
     <string name="info_inserting_title">Inserting widgets</string>
     <string name="info_inserting">Instead of \"running\" widgets, you add them to your home screen.  To insert a widget, long-press in an empty area on the default home screen and select \"Widgets\", then \"Forecast\".\n\nTap on a widget to see detailed forecast for the next few days.  Any inserted widgets will update automatically about four times each day, and no battery is used between updates.\n\nYou can also insert multiple widgets to keep track of weather in multiple locations.</string>
+    <string name="info_weather_update_title">Weather forecast update</string>
+    <string name="info_weather_update">Forecast can be manually (in details windows, click on title bar to request), or automatically (in configuration panel). Set 0h in configuration panel to avoid automatic update. If update fail (server error or internet connection problem), an asterix will appear in the upper right corner.</string>
     <string name="info_skins_title">Changing skin</string>
     <string name="info_skins">To change skin, you have to download skins ressource file from this website : http://forum.xda-developers.com/showthread.php?p=3954429, and uncompress this file to sdcard root. To set the skin, use widget configuration panel. To contribute, please post your skin at XDA.</string>
     <string name="info_credits_title">Data and icon credits</string>
