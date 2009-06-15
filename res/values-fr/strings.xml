@@ -69,6 +69,8 @@
 
     <string name="info_inserting_title">Inserer les widgets</string>
     <string name="info_inserting">Au lieu de \"lancer\" les widgets, vous devez les ajouter au bureau.  Pour inserer un widget, appuyez longtemps dans une zone vide de votre bureau et sélectionnez \"Widgets\", puis \"Météo\".\n\nTaper sur le widget pour voir les prévisions météo pour les prochains jours.  Chaque widget insérer peut etre mis à jour automatiquement.\n\nVous pouvez ajouter plusieurs widgets pour afficher la météo de plusieurs emplcaments.</string>
+    <string name="info_weather_update_title">Weather forecast update</string>
+    <string name="info_weather_update">Forecast can be manually (in details windows, click on title bar to request), or automatically (in configuration panel). Set 0h in configuration panel to avoid automatic update. If update fail (server error or internet connection problem), an asterix will appear in the upper right corner.</string>
     <string name="info_skins_title">Changing skin</string>
     <string name="info_skins">To change skin, you have to download skins ressource file from this website : http://forum.xda-developers.com/showthread.php?p=3954429, and uncompress this file to sdcard root. To set the skin, use widget configuration panel. To contribute, please post your skin at XDA.</string>
     <string name="info_credits_title">Data and icon credits</string>

@@ -54,6 +54,21 @@
             <TextView
                 android:layout_width="fill_parent" 
                 android:layout_height="wrap_content"
+                android:text="@string/info_weather_update_title"
+                style="?android:attr/listSeparatorTextViewStyle" />
+
+            <TextView
+                android:id="@+id/info_credits"
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:padding="20dip"
+                android:textSize="16sp"
+                android:text="@string/info_weather_update"
+                android:autoLink="web" />
+                
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
                 android:text="@string/info_credits_title"
                 style="?android:attr/listSeparatorTextViewStyle" />
 
