@@ -19,4 +19,4 @@
     android:minHeight="72dip"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_loading"
-    android:configure="org.jsharkey.sky.ConfigureActivity" />
+    android:configure="org.koxx.forecast_weather.ConfigureActivity" />
