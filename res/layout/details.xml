@@ -25,6 +25,14 @@
         android:layout_height="wrap_content"
         style="@style/DetailsListView" ></ListView>
 
+     <TextView
+        android:id="@+id/details_updates" 
+         android:layout_width="fill_parent" 
+         android:layout_height="wrap_content"
+         android:text="@string/info_update" 
+         android:autoLink="web" 
+         style="@style/InfosImportant"/>
+
     <TextView
         android:id="@+id/details_info" 
         android:layout_width="fill_parent" 
@@ -40,5 +48,6 @@
         android:text="@string/detail_empty"
         android:textAppearance="?android:attr/textAppearanceSmall"
         style="@style/DetailsEmpty" />
+
 
 </LinearLayout>

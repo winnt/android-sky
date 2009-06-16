@@ -53,7 +53,7 @@
     <string name="search_hint">Nom de la ville ou ZIP</string>
 
     <string name="menu_config">Configurer</string>
-    <string name="menu_rename">Renomer</string>
+    <string name="menu_rename">Renommer</string>
     <string name="menu_refresh">Rafraichir</string>
 
     <string name="title_details">Détails prévisions</string>
@@ -67,6 +67,9 @@
     <string name="app_name">Météo widget</string>
     <string name="app_descrip">Météo widget permet d'afficher les prévivions météo sur votre bureau en choisisant la fréquence des mises à jour et une localisation automatique</string>
 
+    <string name="info_update_title">Mise à jour</string>
+    <string name="info_update">VOUS AVEZ UNE ANCIENNE VERSION. LES NOUVELLES VERSIONS SONT DISPONIBLES SUR LE MARKET SOUS \"Weather forecast widget\" : http://market.android.com/search?q=pname:org.koxx.weather_forecast .</string>
+    <string name="info_update2">Ceci pour respecter le travail original réalisé par Jeffrey Sharkey, je n'utilise donc plus ce nom d'application.</string>
     <string name="info_inserting_title">Inserer les widgets</string>
     <string name="info_inserting">Au lieu de \"lancer\" les widgets, vous devez les ajouter au bureau.  Pour inserer un widget, appuyez longtemps dans une zone vide de votre bureau et sélectionnez \"Widgets\", puis \"Météo\".\n\nTaper sur le widget pour voir les prévisions météo pour les prochains jours.  Chaque widget insérer peut etre mis à jour automatiquement.\n\nVous pouvez ajouter plusieurs widgets pour afficher la météo de plusieurs emplcaments.</string>
     <string name="info_weather_update_title">Weather forecast update</string>
