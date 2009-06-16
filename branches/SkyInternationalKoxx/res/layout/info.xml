@@ -34,6 +34,42 @@
                 android:layout_height="wrap_content"
                 android:padding="20dip"
                 android:textSize="16sp"
+                android:text="@string/info_update" 
+                android:autoLink="web" 
+                style="@style/InfosImportant"/>
+
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:padding="10dip"
+                android:textSize="16sp"
+                android:text="@string/info_update2"/>
+                
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:text="@string/info_inserting_title"
+                style="?android:attr/listSeparatorTextViewStyle" />
+
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:padding="20dip"
+                android:textSize="16sp"
+                android:text="@string/info_inserting" />
+
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:text="@string/info_skins_title"
+                style="?android:attr/listSeparatorTextViewStyle" />
+
+
+            <TextView
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:padding="20dip"
+                android:textSize="16sp"
                 android:text="@string/info_inserting" />
 
             <TextView

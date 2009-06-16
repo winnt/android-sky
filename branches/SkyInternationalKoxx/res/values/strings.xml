@@ -67,6 +67,9 @@
     <string name="app_name">Forecast widgets</string>
     <string name="app_descrip">Provides forecast desktop widgets that refresh four times daily</string>
 
+    <string name="info_update_title">Updates</string>
+    <string name="info_update">THIS IS AN OLDER VERSION. NEWER VERSION IS AVAILABLE ON MARKET AS \"Weather forecast widget\" : http://market.android.com/search?q=pname:org.koxx.weather_forecast .</string>
+    <string name="info_update2">This is in order to respect original software creator job, i won't anymore use his name as package name.</string>
     <string name="info_inserting_title">Inserting widgets</string>
     <string name="info_inserting">Instead of \"running\" widgets, you add them to your home screen.  To insert a widget, long-press in an empty area on the default home screen and select \"Widgets\", then \"Forecast\".\n\nTap on a widget to see detailed forecast for the next few days.  Any inserted widgets will update automatically about four times each day, and no battery is used between updates.\n\nYou can also insert multiple widgets to keep track of weather in multiple locations.</string>
     <string name="info_weather_update_title">Weather forecast update</string>
