@@ -60,11 +60,11 @@
     <string name="title_configure">Configurer le widget</string>
     <string name="title_info">Prévivions Météo</string>
 
-    <string name="label_med">Météo moyen</string>
-    <string name="label_tiny">Météo petit</string>
-    <string name="label_large">Météo large</string>
+    <string name="label_med">Prévisions météo (2x1)</string>
+    <string name="label_tiny">Prévisions météo (1x1)</string>
+    <string name="label_large">Prévisions météo (4x1)</string>
 
-    <string name="app_name">Météo widget</string>
+    <string name="app_name">Prévisions météo widget</string>
     <string name="app_descrip">Météo widget permet d'afficher les prévivions météo sur votre bureau en choisisant la fréquence des mises à jour et une localisation automatique</string>
 
     <string name="info_update_title">Mise à jour</string>
