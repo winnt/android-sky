@@ -60,11 +60,11 @@
     <string name="title_configure">Configure forecast widget</string>
     <string name="title_info">Forecast info</string>
 
-    <string name="label_med">Forecast</string>
-    <string name="label_tiny">Forecast tiny</string>
-    <string name="label_large">Forecast large</string>
+    <string name="label_med">Weather forecast (2x1)</string>
+    <string name="label_tiny">Weather forecast (1x1)</string>
+    <string name="label_large">Weather forecast (4x1)</string>
 
-    <string name="app_name">Forecast widgets</string>
+    <string name="app_name">Weather forecast widgets</string>
     <string name="app_descrip">Provides forecast desktop widgets that refresh four times daily</string>
 
     <string name="info_update_title">Updates</string>
